@@ -99,7 +99,7 @@ for(rep in 3:replication){ # why start with 3?
    svm.cost[rep,n.model]=svm.best$best.parameters$cost
    
  # 2. constructing model   
- svm.model=svm(y~., data=train.data, kernel="radial", gamma=svm.gamma[rep,n.model], cost=svm.cost[rep,n.model])
+ svm.model=svm(y~., data = train.data, kernel="radial", gamma = svm.gamma[rep,n.model], cost=svm.cost[rep,n.model])
  svm.pred=predict(svm.model, test.x)   #svm.pred2=predict(svm.best$best.model, test.data[,-3])
 
  # 3. testing

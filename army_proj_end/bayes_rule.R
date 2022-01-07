@@ -63,7 +63,7 @@ draw.bayes.rule <- function(train, p.mus, n.mus, p.sigma, n.sigma, imbalance.rat
   return(ggplot.object)
 }
 
-draw.svm.rule <- function(train, svm.model){
+draw.svm.rule <- function(train, svm.model, color){
   #dataset is only used to set the range of the grid.
   x1.max = max(train$x1)
   x1.min = min(train$x1)
@@ -78,7 +78,7 @@ draw.svm.rule <- function(train, svm.model){
   z <- attr(z, "decision.values")
   boundary.contour.values <- data.frame(grid.x, z)
   
-  ggplot.object <- geom_contour(data = boundary.contour.values, aes(x = x1, y = x2, z = z), breaks = 0, colour="green")
+  ggplot.object <- geom_contour(data = boundary.contour.values, aes(x = x1, y = x2, z = z), breaks = c(-0.5, 0, 0.5), colour=color)
   
   return(ggplot.object)
 }
