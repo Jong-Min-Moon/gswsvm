@@ -3,7 +3,7 @@ library(ggplot2)
 
 #calculate score of bayes rule classifier
 
-bayes.predict <- function(data.text, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio){
+bayes.predict <- function(data.test, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio){
   x1 <- data.test$x1
   x2 <- data.test$x2
   score <- bayes.score(x1,x2, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
@@ -70,17 +70,29 @@ draw.svm.rule <- function(train, svm.model, color){
   x2.max = max(train$x2)
   x2.min = min(train$x2)
   
-  #decision boundary
+  data.range = list(x1.max = x1.max , x1.min = x1.min, x2.max = x2.max, x2.min = x2.min)
+  boundary.contour.values<- get.svm.decision.values.grid(data.range, svm.model)#decision value grid
+  ggplot.object <- geom_contour(data = boundary.contour.values, aes(x = x1, y = x2, z = z), breaks = 0, colour=color)
+  
+  return(ggplot.object)
+}
+
+get.svm.decision.values.grid <- function(data.range, svm.model){
+  # the svm model should follow the structure of e1071's svm function.
+  x1.min <- data.range$x1.min
+  x1.max <- data.range$x1.max
+  x2.min <- data.range$x2.min
+  x2.max <- data.range$x2.max
+  
   seq.x1 <- seq(x1.min*0.9, x1.max*1.1, length.out = 1000)
   seq.x2 <- seq(x2.min*0.9, x2.max*1.1, length.out = 1000)
   grid.x <- expand.grid(x1 = seq.x1 , x2 = seq.x2 )
   z <- predict(svm.model, grid.x, decision.values = TRUE)
   z <- attr(z, "decision.values")
   boundary.contour.values <- data.frame(grid.x, z)
+  colnames(boundary.contour.values) <- c("x1", "x2", "z")
   
-  ggplot.object <- geom_contour(data = boundary.contour.values, aes(x = x1, y = x2, z = z), breaks = c(-0.5, 0, 0.5), colour=color)
-  
-  return(ggplot.object)
+  return(boundary.contour.values)
 }
 
 model.eval <- function(test.y, pred.y){

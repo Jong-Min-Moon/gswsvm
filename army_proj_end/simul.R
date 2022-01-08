@@ -6,6 +6,8 @@ library(mvtnorm)
 library(caret)
 library(e1071)
 library(SwarmSVM)
+library(rayshader)
+
 source("data_generator.R")
 source("bayes_rule.R")
 
@@ -67,7 +69,7 @@ param.set.c = 2^(-5 : 5);
 param.set.gamma = 2^(-5 : 5);
 
 #simulation parameters
-replication <- 5
+replication <- 2
 n.method <- 6
 
 #################################
@@ -91,6 +93,7 @@ for (rep in 1:replication){# why start with 3?
 
 ### 2.1.1.generate full dataset
 data.full = generate.mvn.mixture(p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio = imbalance.ratio, n.sample = n.samples)
+data.range <- list(x1.max = max(data.full[1]), x1.min = min(data.full[1]), x2.max = max(data.full[2]), x2.min = min(data.full[2]))
 
 ### 2.1.2. split the dataset into training set and testing set by 8:2 strafitied sampling
 idx.split.test <- createDataPartition(data.full$y, p = 1/4)
@@ -356,7 +359,7 @@ svmdc.model <- wsvm(y~., weight = weight.svmdc, data = data.svm.train, kernel="r
 
 svmdc.pred <- predict(svmdc.model, data.test[1:2])
 
-svm.cmat=t(table(svmdc.pred, data.test$y))
+svm.cmat <- table(data.test$y, svmdc.pred)
 svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
 svm.sen[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
 svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
@@ -392,7 +395,7 @@ for (i in 1:length(param.set.c)){ #loop over gamma
     model.now <- clusterSVM(x = data.svm.train[1:2], y = data.svm.train$y, lambda = lambda.now, cost = c.now, centers = param.clusterSVM.k, seed = 512, verbose = 0) 
     
     y.pred.now = predict(model.now, data.svm.tune[1:2])$predictions
-    cmat <- t(table(y.pred.now, data.svm.tune$y))
+    cmat <- table(truth = data.svm.tune$y, pred = y.pred.now)
     sen <- cmat[2,2]/sum(cmat[2,])
     spe <- cmat[1,1]/sum(cmat[1,])
     gme <- sqrt(sen*spe)
@@ -426,14 +429,16 @@ svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
 
 #replication bracket
 
-plot.basic <- draw.basic(data.train, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
-plot.bayes <-draw.bayes.rule(data.test, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
-plot.wsvm <- draw.svm.rule(data.test, gswsvm.model, color = 'green')
+#plot.basic <- draw.basic(data.train, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
+#plot.bayes <-draw.bayes.rule(data.test, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
+#plot.wsvm <- draw.svm.rule(data.test, gswsvm.model, color = 'green')
 #plot.svm <- draw.svm.rule(data.test, svm.model, color = 'orange')
 
-#plot.basic + plot.bayes + plot.wsvm + plot.svm
+#plot.basic + plot.bayes + plot.wsvm
 
-plot.basic + plot.bayes
+#plot.basic + plot.bayes
 
 
-
+gswsvm.decision.function.grid <- get.svm.decision.values.grid(data.range, gswsvm.model)
+faithful_dd <- ggplot(gswsvm.decision.function.grid, aes(x1, x2)) +
+  geom_raster(aes(fill = z))
