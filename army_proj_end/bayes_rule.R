@@ -63,7 +63,7 @@ draw.bayes.rule <- function(train, p.mus, n.mus, p.sigma, n.sigma, imbalance.rat
   return(ggplot.object)
 }
 
-draw.svm.rule <- function(train, svm.model, color){
+draw.svm.rule <- function(train, svm.model, color, cutoff){
   #dataset is only used to set the range of the grid.
   x1.max = max(train$x1)
   x1.min = min(train$x1)
@@ -72,7 +72,7 @@ draw.svm.rule <- function(train, svm.model, color){
   
   data.range = list(x1.max = x1.max , x1.min = x1.min, x2.max = x2.max, x2.min = x2.min)
   boundary.contour.values<- get.svm.decision.values.grid(data.range, svm.model)#decision value grid
-  ggplot.object <- geom_contour(data = boundary.contour.values, aes(x = x1, y = x2, z = z), breaks = 0, colour=color)
+  ggplot.object <- geom_contour(data = boundary.contour.values, aes(x = x1, y = x2, z = z), breaks = cutoff, colour=color)
   
   return(ggplot.object)
 }
@@ -96,12 +96,12 @@ get.svm.decision.values.grid <- function(data.range, svm.model){
 }
 
 model.eval <- function(test.y, pred.y){
-  conf.mat <- t(table(pred.y, test.y))
-  acc.total <- (conf.mat[1,1] + conf.mat[2,2]) / sum(conf.mat)
-  sens <- conf.mat[2,2] / sum(conf.mat[2,]) #TP / real P = recall
-  prec <- conf.mat[2,2] / sum(conf.mat[,2]) #TP / predicted P
-  spec <- conf.mat[1,1] / sum(conf.mat[1,]) #TN / real N
-  gmean <- sqrt(sens * spec)
+  conf.mat <- table("truth" = test.y, "pred" = pred.y)
+  acc <- (conf.mat[1,1] + conf.mat[2,2]) / sum(conf.mat)
+  sen <- conf.mat[2,2] / sum(conf.mat[2,]) #TP / real P = recall
+  pre <- conf.mat[2,2] / sum(conf.mat[,2]) #TP / predicted P
+  spe <- conf.mat[1,1] / sum(conf.mat[1,]) #TN / real N
+  gme <- sqrt(sen * spe)
   
-  return(list("conf.mat" = conf.mat, "sens" = sens, "prec" = prec, "spec" = spec, "gmean" = gmean))
+  return(list("conf.mat" = conf.mat, "acc" = acc, "sen" = sen, "pre" = pre, "spe" = spe, "gme" = gme))
 }
