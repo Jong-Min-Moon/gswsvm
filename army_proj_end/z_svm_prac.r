@@ -162,3 +162,17 @@ for (i in 1:2){
   }
 }
 
+library(performanceEstimation)
+set.seed(2021)
+table(data.train$y)
+genData = SMOTE(data.train[c("x1", "x2")], data.train["y"], dup_size = 0)
+table(genData$syn_data$class)
+genData_2 = SMOTE(data_example[,-3],data_example[,3],K=7)
+table(genData_2$data$class)
+
+test<-smote.and.split(data.train, genData$syn_data, oversample.ratio[1], tuning.ratio)
+
+table(data.train$y)
+table(test$data.train.og.train$y)
+table(test$data.train.og.tune$y)
+
