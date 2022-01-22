@@ -63,14 +63,25 @@ draw.bayes.rule <- function(train, p.mus, n.mus, p.sigma, n.sigma, imbalance.rat
   return(ggplot.object)
 }
 
-draw.svm.rule <- function(train, svm.model, color, cutoff){
-  #dataset is only used to set the range of the grid.
-  x1.max = max(train$x1)
-  x1.min = min(train$x1)
-  x2.max = max(train$x2)
-  x2.min = min(train$x2)
+get.data.range <- function(data.x){
+  max.values <- apply(data.x, 2, max)
+  min.values <- apply(data.x, 2, min)
   
-  data.range = list(x1.max = x1.max , x1.min = x1.min, x2.max = x2.max, x2.min = x2.min)
+  return( list(max = max.values, min = min.values) )
+}
+
+
+draw.svm.rule <- function(data.x, svm.model, color, cutoff){
+  #dataset is only used to set the range of the grid.
+  
+  data.range <- get.data.range(data.x)
+  if (length(data.range$max) > 2){
+    print("Only accept two variables")
+    return()
+  }else{
+    
+  }
+    
   boundary.contour.values<- get.svm.decision.values.grid(data.range, svm.model)#decision value grid
   ggplot.object <- geom_contour(data = boundary.contour.values, aes(x = x1, y = x2, z = z), breaks = cutoff, colour=color)
   
@@ -79,10 +90,11 @@ draw.svm.rule <- function(train, svm.model, color, cutoff){
 
 get.svm.decision.values.grid <- function(data.range, svm.model){
   # the svm model should follow the structure of e1071's svm function.
-  x1.min <- data.range$x1.min
-  x1.max <- data.range$x1.max
-  x2.min <- data.range$x2.min
-  x2.max <- data.range$x2.max
+  x1.min <- (data.range$min)[1]
+  x2.min <- (data.range$min)[2]
+  
+  x1.max <- (data.range$max)[1]
+  x2.max <- (data.range$max)[2]
   
   seq.x1 <- seq(x1.min*0.9, x1.max*1.1, length.out = 1000)
   seq.x2 <- seq(x2.min*0.9, x2.max*1.1, length.out = 1000)

@@ -18,31 +18,36 @@ source("simplifier.R")
 #################################
 
 # 1.1. simulation parameters
-replication <- 30
-n.method <- 10
-use.method <- list("gswsvm3"= 1, "gswsvm" = 0, "svm" = 1, "svmdc" = 0, "clusterSVM" = 0, "zsvm" = 0, "smotesvm" = 1)
-set.seed(2021)
+replication <- 1
+n.method <- 11
+use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 0, "clusterSVM" = 0, "zsvm" = 1, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
+#set.seed(2021)
 tuning.ratio <- 1/4
 
 ## note: In our paper, positive class = minority and negative class = majority.
 ## 1.1. misclassification cost ratio
-c.neg <- 4
+# 여러 상황으로 실험 중...
+c.neg <- 15
 c.pos <- 1
 cost.ratio <- c.neg / c.pos
-cost.ratio.og.syn <- 3
+cost.ratio.og.syn <- 10
 ## 1.2. data generation parameters
-n.samples = 1000
+n.samples = 5000
 ### 1.2.1. data generation imbalance ratio
-imbalance.ratio <- 6
+imbalance.ratio <- 20
 pi.pos <- 1 / (1 + imbalance.ratio) # probability of a positive sample being generated
 pi.neg <- 1 - pi.pos # probability of a negative sample being generated
 
 ### 1.2.2. sampling imbalance ratio(i.e. imbalance ratio after SMOTE)
 ### since the performance may vary w.r.t to this quantity,
 ### we treat this as s hyperparameter and
-pi.s.pos <- c(pi.pos*1.25, pi.pos*1.5, pi.pos*1.75, pi.pos*2, pi.pos*2.25, pi.pos*2.5)
+imbalance.ratio.s <- imbalance.ratio / 2
+#pi.s.pos <- c(pi.pos*1.25, pi.pos*1.5, pi.pos*1.75, pi.pos*2, pi.pos*2.25, pi.pos*2.5, pi.pos*3, pi.pos*3.5, pi.pos*4)
+#pi.s.pos <- c(pi.pos*10 )
+pi.s.pos  <- 1 / (1 + imbalance.ratio.s)
 pi.s.neg <- 1 - pi.s.pos
-imbalance.ratio.s <-  pi.s.neg / pi.s.pos
+
+#imbalance.ratio.s <-  pi.s.neg / pi.s.pos
 oversample.ratio = (pi.s.pos / pi.pos) - 1
 
 synthetic.within.pos.ratio <- oversample.ratio / (1 + oversample.ratio)
@@ -103,6 +108,7 @@ svm.gamma <- matrix(NA, replication,n.method);
 
 for (rep in 1:replication){# why start with 3?
   print(cat(rep, "th run"))
+  set.seed(rep)
 ## 2.1. Prepare a dataset
 
 ### 2.1.1.generate full dataset
@@ -554,7 +560,6 @@ if (use.method$"zsvm"){ #use this method or NOT
   svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
   } #use this method or NOT bracket
 
-} #replication bracket
 
 
 
@@ -568,7 +573,7 @@ if (use.method$"zsvm"){ #use this method or NOT
 # J. Artif. Intell.Res., vol. 16, no. 1, pp. 321–357, 2002.
 n.model <- 7
 
-if (use.method$"smote"){ #use this method or NOT
+if (use.method$"smotesvm"){ #use this method or NOT
   # 1. Apply smote to the positive class
   
   ## 1.1. copy the training dataset, since oversampling would result to modified dataset.
@@ -637,25 +642,296 @@ if (use.method$"smote"){ #use this method or NOT
   svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
   svm.spe[rep,n.model]=svm.cmat[1,1]/sum(svm.cmat[1,])
   svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
-}
+  }#use this method or NOT
+
+
+#################################################################################
+# Method 8. Borderline SMOTE-SVM
+#################################################################################
+# Reference: 
+
+n.model <- 8
+
+if (use.method$"blsmotesvm"){ #use this method or NOT
+  # 1. Apply smote to the positive class
+  
+  ## 1.1. copy the training dataset, since oversampling would result to modified dataset.
+  data.blsmotesvm <- data.train 
+  data.blsmotesvm.pos.idx <- rownames(data.train)[(data.blsmotesvm$y)=="pos"]
+  
+  ## 1.2. TUNING
+  tuning.criterion.values.blsmotesvm <- create.tuning.criterion.storage(list("pi.s.pos" = pi.s.pos, "c" = param.set.c, "gamma" = param.set.gamma))
+  
+  for (k in 1 : length(pi.s.pos)){ #loop over pi.s.pos
+    
+    ### 1.2.1. Oversample using smote, and split into training and tuning set
+    smote.sample = BLSMOTE(data.train[c("x1", "x2")], data.train["y"], dupSize = 0)
+    
+    data.plus.smote <- smote.and.split(data.blsmotesvm, smote.sample$syn_data, oversample.ratio[k], tuning.ratio)
+    data.blsmotesvm.train <- data.plus.smote$"data.train.og.train"
+    data.blsmotesvm.tune <- data.plus.smote$"data.train.og.tune"
+    
+    ### 1.2.2. loop over c and gamma
+    for (i in 1:length(param.set.c)){ #loop over c
+      for (j in 1:length(param.set.gamma)){ #loop over gamma
+        row.idx.now <- (k-1) * length(param.set.gamma)*length(param.set.c) + (i-1) * length(param.set.gamma) + j #set row index
+        
+        c.now <- param.set.c[i]
+        gamma.now <- param.set.gamma[j]
+        
+        model.now <- svm(y ~ ., gamma = gamma.now, cost = c.now, kernel="radial", scale = FALSE, data = data.blsmotesvm.train)# fit weighted svm model
+        
+        y.pred.now <- predict(model.now, data.blsmotesvm.tune[c("x1", "x2")]) #fitted value for tuning dataset
+        
+        cmat <- table(data.blsmotesvm.tune$y, y.pred.now)
+        sen <- cmat[2,2]/sum(cmat[2,])
+        spe <- cmat[1,1]/sum(cmat[1,])
+        gme <- sqrt(sen*spe)
+        
+        tuning.criterion.values.blsmotesvm[row.idx.now, c("pi.s.pos", "c", "gamma")] <- c(pi.s.pos[k], c.now, gamma.now)
+        tuning.criterion.values.blsmotesvm[row.idx.now, "criterion"] <- gme
+      }} #end for two for loops
+  } #end of pi.s.pos loop
+  
+  #### 1.2.3. get the best parameters
+  idx.sorting <- order(-tuning.criterion.values.blsmotesvm$criterion, tuning.criterion.values.blsmotesvm$c, tuning.criterion.values.blsmotesvm$gamma)
+  tuning.criterion.values.blsmotesvm <- tuning.criterion.values.blsmotesvm[idx.sorting, ]
+  param.best <- tuning.criterion.values.blsmotesvm[1,]
+  param.blsmotesvm.c <- param.best$"c"
+  param.blsmotesvm.gamma <- param.best$"gamma"
+  param.blsmotesvm.pi.s.pos <- param.best$"pi.s.pos"
+  
+  # 1.4. with the best hyperparameter, fit the svm
+  
+  ## 1.4.1. set parameters
+  param.blsmotesvm.pi.s.neg <- 1 - param.blsmotesvm.pi.s.pos
+  oversample.ratio.blsmotesvm <- (param.blsmotesvm.pi.s.pos / pi.pos) - 1
+  
+  ### 1.4.2 Oversample using the learned GMC model
+  data.plus.smote <- smote.and.split(data.blsmotesvm, smote.sample$syn_data, oversample.ratio.blsmotesvm, tuning.ratio)
+  data.blsmotesvm.train <- data.plus.smote$"data.train.og.train"
+  data.blsmotesvm.tune <- data.plus.smote$"data.train.og.tune"
+  
+  blsmotesvm.model <- svm(y ~ ., gamma = param.blsmotesvm.gamma, cost = param.blsmotesvm.c, kernel="radial", scale = FALSE, data = data.blsmotesvm.train)
+  blsmotesvm.pred <- predict(blsmotesvm.model, data.test[c("x1", "x2")])
+  
+  svm.cmat=t(table(blsmotesvm.pred, data.test$y))
+  svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
+  svm.sen[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
+  svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
+  svm.spe[rep,n.model]=svm.cmat[1,1]/sum(svm.cmat[1,])
+  svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
+}#use this method or NOT
+
+
+#################################################################################
+# Method 9. DB SMOTE-SVM
+#################################################################################
+# Reference: 
+
+n.model <- 9
+
+if (use.method$"dbsmotesvm"){ #use this method or NOT
+  # 1. Apply smote to the positive class
+  
+  ## 1.1. copy the training dataset, since oversampling would result to modified dataset.
+  data.dbsmotesvm <- data.train 
+  data.dbsmotesvm.pos.idx <- rownames(data.train)[(data.dbsmotesvm$y)=="pos"]
+  
+  ## 1.2. TUNING
+  tuning.criterion.values.dbsmotesvm <- create.tuning.criterion.storage(list("pi.s.pos" = pi.s.pos, "c" = param.set.c, "gamma" = param.set.gamma))
+  
+  for (k in 1 : length(pi.s.pos)){ #loop over pi.s.pos
+    
+    ### 1.2.1. Oversample using smote, and split into training and tuning set
+    smote.sample = DBSMOTE(data.train[c("x1", "x2")], data.train["y"], dupSize = 0)
+    
+    data.plus.smote <- smote.and.split(data.dbsmotesvm, smote.sample$syn_data, oversample.ratio[k], tuning.ratio)
+    data.dbsmotesvm.train <- data.plus.smote$"data.train.og.train"
+    data.dbsmotesvm.tune <- data.plus.smote$"data.train.og.tune"
+    
+    ### 1.2.2. loop over c and gamma
+    for (i in 1:length(param.set.c)){ #loop over c
+      for (j in 1:length(param.set.gamma)){ #loop over gamma
+        row.idx.now <- (k-1) * length(param.set.gamma)*length(param.set.c) + (i-1) * length(param.set.gamma) + j #set row index
+        
+        c.now <- param.set.c[i]
+        gamma.now <- param.set.gamma[j]
+        
+        model.now <- svm(y ~ ., gamma = gamma.now, cost = c.now, kernel="radial", scale = FALSE, data = data.dbsmotesvm.train)# fit weighted svm model
+        
+        y.pred.now <- predict(model.now, data.dbsmotesvm.tune[c("x1", "x2")]) #fitted value for tuning dataset
+        
+        cmat <- table(data.dbsmotesvm.tune$y, y.pred.now)
+        sen <- cmat[2,2]/sum(cmat[2,])
+        spe <- cmat[1,1]/sum(cmat[1,])
+        gme <- sqrt(sen*spe)
+        
+        tuning.criterion.values.dbsmotesvm[row.idx.now, c("pi.s.pos", "c", "gamma")] <- c(pi.s.pos[k], c.now, gamma.now)
+        tuning.criterion.values.dbsmotesvm[row.idx.now, "criterion"] <- gme
+      }} #end for two for loops
+  } #end of pi.s.pos loop
+  
+  #### 1.2.3. get the best parameters
+  idx.sorting <- order(-tuning.criterion.values.dbsmotesvm$criterion, tuning.criterion.values.dbsmotesvm$c, tuning.criterion.values.dbsmotesvm$gamma)
+  tuning.criterion.values.dbsmotesvm <- tuning.criterion.values.dbsmotesvm[idx.sorting, ]
+  param.best <- tuning.criterion.values.dbsmotesvm[1,]
+  param.dbsmotesvm.c <- param.best$"c"
+  param.dbsmotesvm.gamma <- param.best$"gamma"
+  param.dbsmotesvm.pi.s.pos <- param.best$"pi.s.pos"
+  
+  # 1.4. with the best hyperparameter, fit the svm
+  
+  ## 1.4.1. set parameters
+  param.dbsmotesvm.pi.s.neg <- 1 - param.dbsmotesvm.pi.s.pos
+  oversample.ratio.dbsmotesvm <- (param.dbsmotesvm.pi.s.pos / pi.pos) - 1
+  
+  ### 1.4.2 Oversample using the learned GMC model
+  data.plus.smote <- smote.and.split(data.dbsmotesvm, smote.sample$syn_data, oversample.ratio.dbsmotesvm, tuning.ratio)
+  data.dbsmotesvm.train <- data.plus.smote$"data.train.og.train"
+  data.dbsmotesvm.tune <- data.plus.smote$"data.train.og.tune"
+  
+  dbsmotesvm.model <- svm(y ~ ., gamma = param.dbsmotesvm.gamma, cost = param.dbsmotesvm.c, kernel="radial", scale = FALSE, data = data.dbsmotesvm.train)
+  dbsmotesvm.pred <- predict(dbsmotesvm.model, data.test[c("x1", "x2")])
+  
+  svm.cmat=t(table(dbsmotesvm.pred, data.test$y))
+  svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
+  svm.sen[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
+  svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
+  svm.spe[rep,n.model]=svm.cmat[1,1]/sum(svm.cmat[1,])
+  svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
+}#use this method or NOT
+
+
+#################################################################################
+# Method 10. SMOTEDC
+#################################################################################
+n.model <- 10
+  
+if (use.method$"smotedc"){ #use this method or NOT
+    
+  # 1. Apply smote to the positive class
+    
+    ## 1.1. copy the training dataset, since oversampling would result to modified dataset.
+    data.smotedc <- data.train 
+    data.smotedc.pos.idx <- rownames(data.train)[(data.smotedc$y)=="pos"]
+    
+    ## 1.2. TUNING
+    tuning.criterion.values.smotedc <- create.tuning.criterion.storage(list("pi.s.pos" = pi.s.pos, "c" = param.set.c, "gamma" = param.set.gamma))
+    
+    for (k in 1 : length(pi.s.pos)){ #loop over pi.s.pos
+      
+      ### 1.2.1. Oversample using smote, and split into training and tuning set
+      smote.sample = SMOTE(data.train[c("x1", "x2")], data.train["y"], dup_size = 0)
+      
+      data.plus.smote <- smote.and.split(data.smotedc, smote.sample$syn_data, oversample.ratio[k], tuning.ratio)
+      data.smotedc.train <- data.plus.smote$"data.train.og.train"
+      data.smotedc.tune <- data.plus.smote$"data.train.og.tune"
+      
+      weight.smotedc.neg <- sum(data.smotedc.train$y == 'pos') / length(data.smotedc.train$y)
+      weight.smotedc.pos <- sum(data.smotedc.train$y == 'neg') / length(data.smotedc.train$y)
+      
+      weight.smotedc <- weight.smotedc.pos * (data.smotedc.train$y == 'pos') + weight.smotedc.neg * (data.smotedc.train$y == 'neg')
+      
+      ### 1.2.2. loop over c and gamma
+      for (i in 1:length(param.set.c)){ #loop over c
+        for (j in 1:length(param.set.gamma)){ #loop over gamma
+          row.idx.now <- (k-1) * length(param.set.gamma)*length(param.set.c) + (i-1) * length(param.set.gamma) + j #set row index
+          
+          c.now <- param.set.c[i]
+          gamma.now <- param.set.gamma[j]
+          
+          model.now <- wsvm(y ~ ., weight = weight.smotedc, gamma = gamma.now, cost = c.now, kernel="radial", scale = FALSE, data = data.smotedc.train)# fit weighted svm model
+          
+          y.pred.now <- predict(model.now, data.smotedc.tune[c("x1", "x2")]) #fitted value for tuning dataset
+          
+          cmat <- table(data.smotedc.tune$y, y.pred.now)
+          sen <- cmat[2,2]/sum(cmat[2,])
+          spe <- cmat[1,1]/sum(cmat[1,])
+          gme <- sqrt(sen*spe)
+          
+          tuning.criterion.values.smotedc[row.idx.now, c("pi.s.pos", "c", "gamma")] <- c(pi.s.pos[k], c.now, gamma.now)
+          tuning.criterion.values.smotedc[row.idx.now, "criterion"] <- gme
+        }} #end for two for loops
+    } #end of pi.s.pos loop
+    
+    #### 1.2.3. get the best parameters
+    idx.sorting <- order(-tuning.criterion.values.smotedc$criterion, tuning.criterion.values.smotedc$c, tuning.criterion.values.smotedc$gamma)
+    tuning.criterion.values.smotedc <- tuning.criterion.values.smotedc[idx.sorting, ]
+    param.best <- tuning.criterion.values.smotedc[1,]
+    param.smotedc.c <- param.best$"c"
+    param.smotedc.gamma <- param.best$"gamma"
+    param.smotedc.pi.s.pos <- param.best$"pi.s.pos"
+    
+    # 1.4. with the best hyperparameter, fit the svm
+    
+    ## 1.4.1. set parameters
+    param.smotedc.pi.s.neg <- 1 - param.smotedc.pi.s.pos
+    oversample.ratio.smotedc <- (param.smotedc.pi.s.pos / pi.pos) - 1
+    
+    ### 1.4.2 Oversample using the learned GMC model
+    data.plus.smote <- smote.and.split(data.smotedc, smote.sample$syn_data, oversample.ratio.smotedc, tuning.ratio)
+    data.smotedc.train <- data.plus.smote$"data.train.og.train"
+    data.smotedc.tune <- data.plus.smote$"data.train.og.tune"
+    
+    weight.smotedc.neg <- sum(data.smotedc.train$y == 'pos') / length(data.smotedc.train$y)
+    weight.smotedc.pos <- sum(data.smotedc.train$y == 'neg') / length(data.smotedc.train$y)
+    
+    weight.smotedc <- weight.smotedc.pos * (data.smotedc.train$y == 'pos') + weight.smotedc.neg * (data.smotedc.train$y == 'neg')
+    
+    
+    smotedc.model <- wsvm(y ~ ., weight = weight.smotedc, gamma = param.smotedc.gamma, cost = param.smotedc.c, kernel="radial", scale = FALSE, data = data.smotedc.train)
+    smotedc.pred <- predict(smotedc.model, data.test[c("x1", "x2")])
+    
+    svm.cmat=t(table(smotedc.pred, data.test$y))
+    svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
+    svm.sen[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
+    svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
+    svm.spe[rep,n.model]=svm.cmat[1,1]/sum(svm.cmat[1,])
+    svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
+  }#use this method or NOT
+  
+  
+#################################################################################
+# Baseline. Bayes Rule
+#################################################################################
+n.model <- n.method
+pred.bayes <- bayes.predict(data.test, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
+model.eval.bayes <- model.eval(test.y = data.test$y, pred.y = pred.bayes)
+
+svm.acc[rep,n.model] <- model.eval.bayes$acc
+svm.sen[rep,n.model] <- model.eval.bayes$sen
+svm.pre[rep,n.model] <- model.eval.bayes$pre
+svm.spe[rep,n.model] <- model.eval.bayes$spe
+svm.gme[rep,n.model] <- model.eval.bayes$gme
+
+
+} #replication bracket
 
 write.table(svm.gme,"gmeresult.csv")
 
+apply(svm.gme, 2, mean)
+apply(svm.sen, 2, mean)
+apply(svm.spe, 2, mean)
 
-#plot.basic <- draw.basic(data.test, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
-#plot.bayes <-draw.bayes.rule(data.test, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
-#plot.wsvm <- draw.svm.rule(data.test, gswsvm.model, color = 'green', cutoff = 0)
+plot(gswsvm.model, data.test)
+plot(zsvm.model, data.test)
+
+
+#plot.basic <- draw.basic(data.train, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
+#plot.bayes <-draw.bayes.rule(data.train, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
+#plot.wsvm <- draw.svm.rule(data.test[c("x1","x2")], gswsvm.model, color = 'green', cutoff = 0)
 #plot.svm <- draw.svm.rule(data.test, svm.model, color = 'orange')
 
 #plot.basic + plot.bayes + plot.wsvm
-#plot.basic + plot.bayes
+#plot.basic + plot.bayes 
+
 
 
 #################################################################################
 # Bayes Rule
 #################################################################################
-#pred.bayes <- bayes.predict(data.test, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
-#model.eval.bayes <- model.eval(test.y = data.test$y, pred.y = pred.bayes)
+
 # 
 # gswsvm.grid <- get.svm.decision.values.grid(data.range, gswsvm.model)
 # gswsvm.heatmap <- ggplot(gswsvm.grid, aes(x1, x2)) +

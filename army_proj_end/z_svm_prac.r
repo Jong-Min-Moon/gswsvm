@@ -19,14 +19,14 @@ source("zsvm.R")
 
 ## note: In our paper, positive class = minority and negative class = majority.
 ## 1.1. misclassification cost ratio
-c.neg <- 4
+c.neg <- 5
 c.pos <- 1
 cost.ratio <- c.neg / c.pos
 
 ## 1.2. data generation parameters
-n.samples = 1000
+n.samples = 2000
 ### 1.2.1. data generation imbalance ratio
-imbalance.ratio <- 6
+imbalance.ratio <- 10
 pi.pos <- 1 / (1 + imbalance.ratio) # probability of a positive sample being generated
 pi.neg <- 1 - pi.pos # probability of a negative sample being generated
 

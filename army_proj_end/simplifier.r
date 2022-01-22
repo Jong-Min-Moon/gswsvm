@@ -28,12 +28,14 @@ get.gmc.oversample <-function(gmc.model.pos, data.gswsvm.pos, oversample.ratio, 
   
   gmc.index <- sample(x = 1:G, size = n.oversample, replace = T, prob = prob) #randomly assign group, according to the learned group membership probability.
   data.gmc <- data.frame(matrix(NA, n.oversample, d + 2)) #initialize the oversampled data storing matrix
-  colnames(data.gmc) <- c("x1", "x2", "group", "y")
+  n.variables <- length(names(data.gswsvm.pos))
+  variables.x <- names(data.gswsvm.pos)[1:(n.variables-1)]
+  colnames(data.gmc) <- c(variables.x ,c("group", "y"))
   
   
   #2. generate samples
   for(i in 1 : n.oversample) {
-    data.gmc[i,c("x1", "x2")] <- rmvnorm(1, mean = means[ , gmc.index[i]],sigma=vars[,,gmc.index[i]])
+    data.gmc[i,variables.x] <- rmvnorm(1, mean = means[ , gmc.index[i]],sigma=vars[,,gmc.index[i]])
     data.gmc[i,"group"] <- gmc.index[i]
     data.gmc[i, "y"] <- "pos"
   }
@@ -44,8 +46,9 @@ get.gmc.oversample <-function(gmc.model.pos, data.gswsvm.pos, oversample.ratio, 
   data.gmc.train <- data.gmc[-idx.split.gmc$Resample1, ]
   data.gmc.tune <- data.gmc[idx.split.gmc$Resample1, ]
   
-  data.gmc.train <- data.gmc.train[c("x1", "x2", "y")]  # remove group variable
-  data.gmc.tune <- data.gmc.tune[c("x1", "x2", "y")]   # remove group variable
+
+  data.gmc.train <- data.gmc.train[c(variables.x, c("y"))]  # remove group variable
+  data.gmc.tune <- data.gmc.tune[c(variables.x, c("y"))]   # remove group variable
   return(list("data.gmc.train" = data.gmc.train, "data.gmc.tune" = data.gmc.tune))
 } # end of the funciton get.gmc.oversample
  
