@@ -40,16 +40,17 @@ get.gmc.oversample <-function(gmc.model.pos, data.gswsvm.pos, oversample.ratio, 
     data.gmc[i, "y"] <- "pos"
   }
   data.gmc$y <- factor(data.gmc$y, levels = c("neg", "pos")) # turn the y variable into a factor
-  
+  data.gmc.train <-data.gmc
   # 3. split into training and tuning set, stratified w.r.t. group membership
-  idx.split.gmc <- createDataPartition(data.gmc$group, p = tuning.ratio)
-  data.gmc.train <- data.gmc[-idx.split.gmc$Resample1, ]
-  data.gmc.tune <- data.gmc[idx.split.gmc$Resample1, ]
+  #idx.split.gmc <- createDataPartition(data.gmc$group, p = tuning.ratio)
+  #data.gmc.train <- data.gmc[-idx.split.gmc$Resample1, ]
+  #data.gmc.tune <- data.gmc[idx.split.gmc$Resample1, ]
   
 
   data.gmc.train <- data.gmc.train[c(variables.x, c("y"))]  # remove group variable
-  data.gmc.tune <- data.gmc.tune[c(variables.x, c("y"))]   # remove group variable
-  return(list("data.gmc.train" = data.gmc.train, "data.gmc.tune" = data.gmc.tune))
+  #data.gmc.tune <- data.gmc.tune[c(variables.x, c("y"))]   # remove group variable
+  #return(list("data.gmc.train" = data.gmc.train, "data.gmc.tune" = data.gmc.tune))
+  return(list("data.gmc.train" = data.gmc.train))
 } # end of the funciton get.gmc.oversample
  
 split.with.oversample.stratified <- function(data.oversample.pos, tuning.ratio){
