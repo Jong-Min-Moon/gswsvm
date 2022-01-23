@@ -7,7 +7,7 @@ library(caret) # for data splitting
 library(e1071) # for svm
 library(SwarmSVM) # for clusterSVM
 library(smotefamily) # for smote algorithms
-
+library(gridExtra)
 
 source("data_generator.R")
 source("bayes_rule.R")
@@ -19,18 +19,19 @@ source("simplifier.R")
 start_time <- Sys.time() 
 
 # 1.1. simulation parameters
-replication <- 10
+replication <- 5
 n.method <- 11
-use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 0, "clusterSVM" = 0, "zsvm" = 1, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
+use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 0, "zsvm" = 1, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 #set.seed(2021)
-tuning.ratio <- 1/4
+tuning.ratio <- 1/5
+test.ratio <- 1/5
 
 ## note: In our paper, positive class = minority and negative class = majority.
 ## 1.1. misclassification cost ratio
 # 여러 상황으로 실험 중...
 
 ## 1.2. data generation parameters
-n.samples = 8000
+n.samples = 1000
 ### 1.2.1. data generation imbalance ratio
 imbalance.ratio <- 20 ## MAJOR PARAMETER
 
@@ -45,7 +46,7 @@ cost.ratio.og.syn <- cost.ratio
 ### 1.2.2. sampling imbalance ratio(i.e. imbalance ratio after SMOTE)
 ### since the performance may vary w.r.t to this quantity,
 ### we treat this as s hyperparameter and
-imbalance.ratio.s <- imbalance.ratio / 4
+imbalance.ratio.s <- imbalance.ratio / 5
 #pi.s.pos <- c(pi.pos*1.25, pi.pos*1.5, pi.pos*1.75, pi.pos*2, pi.pos*2.25, pi.pos*2.5, pi.pos*3, pi.pos*3.5, pi.pos*4)
 #pi.s.pos <- c(pi.pos*10 )
 pi.s.pos  <- 1 / (1 + imbalance.ratio.s)
@@ -84,25 +85,25 @@ L.og <- c.og * pi.s.neg * pi.pos
 
 
 #checkerboard data
-p.mean1 <- c(-2,-5);
-p.mean2 <- c(8,-5);
-p.mean3 <- c(-7,0);
-p.mean4 <- c(3,0);
-p.mean5 <- c(-2,5);
-p.mean6 <- c(8,5);
-p.mus <- rbind(p.mean1, p.mean2, p.mean3, p.mean4, p.mean5, p.mean6)
+p.mean1 <- c(0.5,-5);
+#p.mean2 <- c(8,-5);
+p.mean3 <- c(-4.5,0);
+p.mean4 <- c(5.5,0);
+p.mean5 <- c(.5,5);
+#p.mean6 <- c(8,5);
+p.mus <- rbind(p.mean1, p.mean3, p.mean4, p.mean5)
 p.sigma <- matrix(c(2.5,0,0,2.5),2,2)
 
-n.mean1 <- c(-7,-5)
-n.mean2 <- c(3,-5);
-n.mean3 <- c(-2,0);
-n.mean4 <- c(8,0);
-n.mean5 <- c(-7,5);
-n.mean6 <- c(2,5);
+n.mean1 <- c(-4.5,-5)
+n.mean2 <- c(5.5,-5);
+n.mean3 <- c(.5,0);
+#n.mean4 <- c(8,0);
+n.mean5 <- c(-4.5,5);
+n.mean6 <- c(4.5,5);
 
 
 
-n.mus <- rbind(n.mean1,n.mean2,n.mean3,n.mean4, n.mean5, n.mean6)
+n.mus <- rbind(n.mean1,n.mean2,n.mean3, n.mean5, n.mean6)
 n.sigma <- matrix(c(4,0,0,4),2,2)
 
 param.set.c = 2^(-5 : 5); 
@@ -136,7 +137,7 @@ data.full = generate.mvn.mixture(p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio
 data.range <- list(x1.max = max(data.full[1]), x1.min = min(data.full[1]), x2.max = max(data.full[2]), x2.min = min(data.full[2]))
 
 ### 2.1.2. split the dataset into training set and testing set by 8:2 strafitied sampling
-idx.split.test <- createDataPartition(data.full$y, p = 1/4)
+idx.split.test <- createDataPartition(data.full$y, p = test.ratio)
 data.train <- data.full[ -idx.split.test$Resample1, ] # 1 - 1/4
 data.test  <- data.full[  idx.split.test$Resample1, ] # 1/4
 
@@ -236,10 +237,10 @@ data.gswsvm.train <- rbind(data.gmc$"data.gmc.train", data.gswsvm.train)
 data.gswsvm.tune <- rbind(data.gmc$"data.gmc.tune", data.gswsvm.tune)
 L.vector.train <- c(rep(L.syn[k], length(data.gmc$"data.gmc.train"$y)), L.vector.train)
 
-gswsvm.model <- wsvm(y ~ ., weight = L.vector.train, gamma = param.gswsvm.gamma, cost = param.gswsvm.c, kernel="radial", scale = FALSE, data = data.gswsvm.train)
-gswsvm.pred <- predict(gswsvm.model, data.test[c("x1", "x2")])
+gswsvm3.model <- wsvm(y ~ ., weight = L.vector.train, gamma = param.gswsvm.gamma, cost = param.gswsvm.c, kernel="radial", scale = FALSE, data = data.gswsvm.train)
+gswsvm3.pred <- predict(gswsvm.model, data.test[c("x1", "x2")])
 
-svm.cmat=t(table(gswsvm.pred, data.test$y))
+svm.cmat=t(table(gswsvm3.pred, data.test$y))
 svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
 svm.sen[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
 svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
@@ -939,19 +940,26 @@ end_time <- Sys.time()
 ("time elapsed")
 end_time - start_time
 
-#plot(gswsvm.model, data.test)
+plot(gswsvm3.model, data.train)
+
+plot(gswsvm.model, data.train)
+
 #plot(zsvm.model, data.test)
 
 
-#plot.basic <- draw.basic(data.train, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
-#plot.bayes <-draw.bayes.rule(data.train, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
-#plot.wsvm <- draw.svm.rule(data.test[c("x1","x2")], gswsvm.model, color = 'green', cutoff = 0)
+plot.basic <- draw.basic(data.gswsvm.train, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
+plot.bayes <-draw.bayes.rule(data.train, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
+plot.wsvm1 <- draw.svm.rule(data.gswsvm.train[c("x1","x2")], gswsvm3.model, color = 'green', cutoff = 0)
+plot.wsvm2 <- draw.svm.rule(data.gswsvm.train[c("x1","x2")], gswsvm.model, color = 'green', cutoff = 0)
 #plot.svm <- draw.svm.rule(data.test, svm.model, color = 'orange')
 
-#plot.basic + plot.bayes + plot.wsvm
-#plot.basic + plot.bayes 
+plot.og <- draw.basic(data.train, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
 
+three<-plot.basic + plot.bayes + plot.wsvm1
+two <- plot.basic + plot.bayes + plot.wsvm2
+grid.arrange(plot.og, three, two, nrow=1, ncol=3)
 
+library(gridExtra)
 
 #################################################################################
 # Bayes Rule
