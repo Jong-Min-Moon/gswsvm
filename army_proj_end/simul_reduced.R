@@ -15,7 +15,7 @@ source("simplifier.R")
 #################################
 # Step 1. parameter setting
 ############))#####################
-trial.number <- 3
+trial.number <- 4
 direc <- paste0("/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/", trial.number)
 
 start_time <- Sys.time() 
@@ -23,7 +23,7 @@ start_time <- Sys.time()
 # 1.1. simulation parameters
 replication <- 100
 n.method <- 10
-use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
+use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 
 tuning.ratio <- 1/5
 test.ratio <- 1/5
@@ -755,15 +755,18 @@ tuning.criterion.values.smotedc <- create.tuning.criterion.storage(list("c" = pa
 idx.split.og <- createDataPartition(data.smotedc$y, p = tuning.ratio)
 data.smotedc.og.train <- data.smotedc[-idx.split.og$Resample1, ] # 1 - tuning ratio
 data.smotedc.og.tune  <- data.smotedc[ idx.split.og$Resample1, ] # tuning ratio
-data.smotedc.og.train.pos <- data.smotedc.og.train[data.smotedc.og.train$y == "pos", ] 
 
 ### 2.2. Oversample positive samples using SMOTE, and split into training and tuning set
 ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size
 ### this is due to the limit of the implementation of smotefamily package: it cannot specifiy the oversample size.
 ### this process is done by custom function smote.and.split.
-n.oversample <- round(dim(data.smotedc.og.train.pos)[1] * oversample.ratio) #calculate desired oversample size
-smote.sample = SMOTE(data.smotedc.og.train.pos[c("x1", "x2")], data.smotedc.og.train.pos["y"], dup_size = 0) #do SMOTE as much as possible
-smote.sample.selected <- smote.select(smote.sample$syn_data, oversample.ratio) #sample and split
+n.oversample.smotedc <- round( sum(data.smotedc.og.train$y == "pos") * oversample.ratio) #calculate desired oversample size
+
+  # provide the *entire* training set, including negative samples.
+  # smote function of smotefamly requires that.
+  # dup = 0 option ensures that only the positive samples will be oversampled
+smote.sample = SMOTE(X = data.smotedc.og.train[c("x1", "x2")], target = data.smotedc.og.train["y"], dup_size = 0) #do SMOTE as much as possible
+smote.sample.selected <- smote.select(smote.sample$syn_data, n.oversample.smotedc) #sample and split
 
 ### 2.3. synthetic samples are only added to the training set.
 data.smotedc.train <- rbind(smote.sample.selected, data.smotedc.og.train)
