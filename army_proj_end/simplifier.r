@@ -91,14 +91,13 @@ smote.and.split <- function(data.train.og, smote.samples, oversample.ratio, tuni
   data.train.og.tune  <- data.train.og[ idx.split.og$Resample1, ]
   
   #3. split the smote samples into the training set and the tuning set
-  idx.split.smote.samples.selected <- sample(1:dim(smote.samples.selected)[1], dim(smote.samples.selected)[1]*tuning.ratio)
-  smote.samples.selected.train <- smote.samples.selected[ -idx.split.smote.samples.selected, ]
-  smote.samples.selected.tune  <- smote.samples.selected[ idx.split.smote.samples.selected, ]
+  #idx.split.smote.samples.selected <- sample(1:dim(smote.samples.selected)[1], dim(smote.samples.selected)[1]*tuning.ratio)
+  #smote.samples.selected.train <- smote.samples.selected[ -idx.split.smote.samples.selected, ]
+  #smote.samples.selected.tune  <- smote.samples.selected[ idx.split.smote.samples.selected, ]
   
   #4. combine original and synthetic
-  data.train.og.train <- rbind(smote.samples.selected.train, data.train.og.train)
-  data.train.og.tune <- rbind(smote.samples.selected.tune, data.train.og.tune)
-  
+  data.train.og.train <- rbind(smote.samples.selected, data.train.og.train)
+
   return(list("data.train.og.train" = data.train.og.train, "data.train.og.tune" = data.train.og.tune ))
   
   }

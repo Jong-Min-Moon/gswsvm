@@ -7,7 +7,7 @@ library(caret) # for data splitting
 library(e1071) # for svm
 library(SwarmSVM) # for clusterSVM
 library(smotefamily) # for smote algorithms
-library(gridExtra) 
+library(gridExtra)
 
 source("data_generator.R")
 source("bayes_rule.R")
@@ -19,9 +19,9 @@ source("simplifier.R")
 start_time <- Sys.time() 
 
 # 1.1. simulation parameters
-replication <- 100
+replication <- 30
 n.method <- 11
-use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 1, "zsvm" = 1, "smotesvm" = 1, "blsmotesvm"= 1, "dbsmotesvm" = 1, "smotedc" = 1)
+use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 0, "clusterSVM" = 0, "zsvm" = 1, "smotesvm" = 1, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 #set.seed(2021)
 tuning.ratio <- 1/5
 test.ratio <- 1/5
@@ -31,10 +31,10 @@ test.ratio <- 1/5
 # 여러 상황으로 실험 중...
 
 ## 1.2. data generation parameters
-n.samples = 3000
+n.samples = 1000
 ### 1.2.1. data generation imbalance ratio
 
-imbalance.ratios = c(25)
+imbalance.ratios = seq(10,40,2.5)
 for (imbalance.ratio in imbalance.ratios){
 
 #imbalance.ratio <- 30 ## MAJOR PARAMETER
@@ -108,7 +108,7 @@ n.mean6 <- c(4.5,5);
 
 
 n.mus <- rbind(n.mean1,n.mean2,n.mean3, n.mean5, n.mean6)
-n.sigma <- matrix(c(3,0,0,3),2,2) 
+n.sigma <- matrix(c(4,0,0,4),2,2)
 
 param.set.c = 2^(-5 : 5); 
 param.set.gamma = 2^(-5 : 5);
@@ -154,7 +154,7 @@ data.test  <- data.full[  idx.split.test$Resample1, ] # 1/4
 #################################################################################
 if (use.method$"gswsvm3"){ #use this method or NOT
 n.model <- 1
-set.seed(rep)
+
 # 1. copy the training dataset, since oversampling would result to modified dataset.
 data.gswsvm3 <- data.train 
 
@@ -256,7 +256,6 @@ cmat.gswsvm3 <- svm.cmat
 #################################################################################
 if (use.method$"gswsvm"){ #use this method or NOT
   n.model <- 2
-set.seed(rep)
   
   # 1. copy the training dataset, since oversampling would result to modified dataset.
   data.gswsvm <- data.train 
@@ -356,8 +355,6 @@ set.seed(rep)
 #################################################################################
 if (use.method$"svm"){ #use this method or NOT
 n.model <- 3
-set.seed(rep)
-
 # 2.1. split the training data into training and tuning set by 3:1 stratified sampling
 data.svm <- data.train 
 idx.split.svm <- createDataPartition(data.svm$y, p = tuning.ratio)
@@ -416,8 +413,6 @@ svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
 # in Proc. Int. Joint Conf. Artif. Intell.,Stockholm, Sweden, 1999, pp. 55–60.
 if (use.method$"svmdc"){ #use this method or NOT
 n.model <- 4
-set.seed(rep)
-
 # 3.1. The class weights are given based on the method of the paper above:
 # negative class : # of positive training samples / # of total training samples
 # positive class : # of negative training samples / # of total training samples
@@ -476,7 +471,6 @@ svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
 
 if (use.method$"clusterSVM"){ #use this method or NOT
 n.model <- 5
-set.seed(rep)
 
 # 4.1. The number of cluster should be provided: we use the result of GMC model learned.
 param.clusterSVM.k <- gmc.model.pos$G
@@ -534,7 +528,6 @@ svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
 # Z-SVM: An SVM for improved classification of imbalanced data. 
 # Lecture Notes in Computer Science (Including Subseries Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics), 4304 LNAI.
 n.model <- 6
-set.seed(rep)
 
 if (use.method$"zsvm"){ #use this method or NOT
   
@@ -604,7 +597,6 @@ if (use.method$"zsvm"){ #use this method or NOT
 # “SMOTE: Synthetic minority over-sampling technique,”
 # J. Artif. Intell.Res., vol. 16, no. 1, pp. 321–357, 2002.
 n.model <- 7
-set.seed(rep)
 
 if (use.method$"smotesvm"){ #use this method or NOT
   # 1. Apply smote to the positive class
@@ -684,7 +676,6 @@ if (use.method$"smotesvm"){ #use this method or NOT
 # Reference: 
 
 n.model <- 8
-set.seed(rep)
 
 if (use.method$"blsmotesvm"){ #use this method or NOT
   # 1. Apply smote to the positive class
@@ -764,7 +755,6 @@ if (use.method$"blsmotesvm"){ #use this method or NOT
 # Reference: 
 
 n.model <- 9
-set.seed(rep)
 
 if (use.method$"dbsmotesvm"){ #use this method or NOT
   # 1. Apply smote to the positive class
@@ -842,8 +832,7 @@ if (use.method$"dbsmotesvm"){ #use this method or NOT
 # Method 10. SMOTEDC
 #################################################################################
 n.model <- 10
-set.seed(rep)
-
+  
 if (use.method$"smotedc"){ #use this method or NOT
     
   # 1. Apply smote to the positive class
@@ -945,9 +934,7 @@ svm.gme[rep,n.model] <- model.eval.bayes$gme
 
 } #replication bracket
 
-write.table(svm.gme,"gme_result.csv")
-write.table(svm.sen,"sen_result.csv")
-write.table(svm.spe,"spe_result.csv")
+write.table(svm.gme,"gmeresult.csv")
 
 sink(file = "output.txt", append = TRUE)
 print("---------------------------------")
