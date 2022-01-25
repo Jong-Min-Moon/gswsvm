@@ -41,26 +41,15 @@ get.gmc.oversample <-function(gmc.model.pos, data.gswsvm.pos, oversample.ratio){
 } # end of the funciton get.gmc.oversample
  
 
-smote.and.split <- function(data.train.og, smote.samples, oversample.ratio, tuning.ratio){
+smote.select <- function(smote.samples, oversample.ratio){
   n.smote.samples <- dim(smote.samples)[1]
-  n.pos.og <- sum( ( (data.train.og$y) == 'pos' ) )
-  n.oversample <- round(n.pos.og * oversample.ratio) #calculate desired oversample size
-  
-  #1. randomly select n.oversample elements from the smote samples
+ 
+  randomly select n.oversample elements from the smote samples
   smote.samples.selected <- smote.samples[ sample(1:n.smote.samples, n.oversample, replace = FALSE), ]
   smote.samples.selected[,3] <- factor(smote.samples.selected[,3], levels = c("neg", "pos")); #smote function changes the datatype and name of the target variable; So we fix them.
   colnames(smote.samples.selected) <- c("x1","x2","y") 
 
-  #2. split the original samples into a training set and a tuning set
-  idx.split.og <- createDataPartition(data.train.og$y, p = tuning.ratio)
-  data.train.og.train <- data.train.og[ -idx.split.og$Resample1, ]
-  data.train.og.tune  <- data.train.og[ idx.split.og$Resample1, ]
-  
-  #3. combine the training set(**NOT the tuning set**) and synthetic samples 
-  data.train.train.smoted <- rbind(smote.samples.selected, data.train.og.train)
-
-  return(list("data.train.smoted" = data.train.train.smoted, "data.train.tune" = data.train.og.tune ))
-  
+  return(smote.samples.selected)
   }
 
 

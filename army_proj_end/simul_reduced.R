@@ -23,7 +23,7 @@ start_time <- Sys.time()
 # 1.1. simulation parameters
 replication <- 100
 n.method <- 10
-use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
+use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 
 tuning.ratio <- 1/5
 test.ratio <- 1/5
@@ -36,7 +36,7 @@ test.ratio <- 1/5
 n.samples = 1000
 ### 1.2.1. data generation imbalance ratio
 
-imbalance.ratios <-  c(10)
+imbalance.ratios <-  seq(10,40,2.5)
 
 # saving matrices
 imbal.gme <- matrix(NA, nrow = length(imbalance.ratios), ncol = n.method)
@@ -120,7 +120,7 @@ n.mean6 <- c(4.5,5);
 
 
 n.mus <- rbind(n.mean1,n.mean2,n.mean3, n.mean5, n.mean6)
-n.sigma <- matrix(c(3,0,0,3),2,2) 
+n.sigma <- matrix(c(3.5,0,0,3.5),2,2) 
 
 param.set.c = 2^(-5 : 5); 
 param.set.gamma = 2^(-5 : 5);
@@ -420,7 +420,7 @@ param.svmdc.c <- tuning.criterion.values.svmdc[1,1]
 param.svmdc.gamma <- tuning.criterion.values.svmdc[1,2]
 
 #fit and evaluate performance on the test set
-svmdc.model <- wsvm(y~., weight = weight.svmdc, data = data.svm.train, kernel="radial", gamma=param.svmdc.gamma, cost=param.svmdc.c)
+svmdc.model <- wsvm(data = data.svm.train, y~., weight = weight.svmdc, kernel="radial", gamma=param.svmdc.gamma, cost=param.svmdc.c)
 svmdc.pred <- predict(svmdc.model, data.test[1:2])
 
 svm.cmat <- table("truth" = data.test$y, "svmdc.pred" = svmdc.pred)
@@ -492,7 +492,7 @@ svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
 
 
 #################################################################################
-# Method 6. SMOTE
+# Method 6. SMOTE SVM
 #################################################################################
 # Reference: N. V. Chawla, K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer,
 # “SMOTE: Synthetic minority over-sampling technique,”
@@ -501,9 +501,8 @@ n.model <- 6
 set.seed(rep)
 
 if (use.method$"smotesvm"){ #use this method or NOT
-  # 1. Apply smote to the positive class
   
-  ## 1.1. copy the training dataset, since oversampling would result to modified dataset.
+  ## 1. copy the training dataset, since oversampling would result to modified dataset.
   data.smotesvm <- data.train 
   data.smotesvm.pos.idx <- rownames(data.train)[(data.smotesvm$y)=="pos"]
   
@@ -512,10 +511,14 @@ if (use.method$"smotesvm"){ #use this method or NOT
   
   for (k in 1 : length(pi.s.pos)){ #loop over pi.s.pos
     
-    ### 1.2.1. Oversample using smote, and split into training and tuning set
-    smote.sample = SMOTE(data.train[c("x1", "x2")], data.train["y"], dup_size = 0)
-
-    data.plus.smote <- smote.and.split(data.smotesvm, smote.sample$syn_data, oversample.ratio, tuning.ratio)
+  ### 1.2.1. Oversample using smote, and split into training and tuning set
+    smote.sample <- SMOTE(data.train[c("x1", "x2")], data.train["y"], dup_size = 0)
+    smote.sample.selected <- smote.and.split(data.smotesvm, smote.sample$syn_data, oversample.ratio, tuning.ratio)
+    
+    
+  
+  #3. combine the training set(**NOT the tuning set**) and synthetic samples 
+  data.train.train.smoted <- rbind(smote.samples.selected, data.train.og.train)
     data.smotesvm.train <- data.plus.smote$"data.train.smoted"
     data.smotesvm.tune <- data.plus.smote$"data.train.tune"
     
@@ -748,18 +751,25 @@ data.smotedc <- data.train
 ### 2.1. prepare a data.frame for storing the hyperparamter tuning results
 tuning.criterion.values.smotedc <- create.tuning.criterion.storage(list("c" = param.set.c, "gamma" = param.set.gamma))
     
+### 2.2 split the dataset into a training set and a tuning set.
+idx.split.og <- createDataPartition(data.smotedc$y, p = tuning.ratio)
+data.smotedc.og.train <- data.smotedc[-idx.split.og$Resample1, ] # 1 - tuning ratio
+data.smotedc.og.tune  <- data.smotedc[ idx.split.og$Resample1, ] # tuning ratio
+data.smotedc.og.train.pos <- data.smotedc.og.train[data.smotedc.og.train$y == "pos", ] 
+
 ### 2.2. Oversample positive samples using SMOTE, and split into training and tuning set
 ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size
 ### this is due to the limit of the implementation of smotefamily package: it cannot specifiy the oversample size.
-### also, split the dataset into a training set and a tuning set.
-### synthetic samples are only added to the training set.
 ### this process is done by custom function smote.and.split.
-smote.sample = SMOTE(data.smotedc[c("x1", "x2")], data.smotedc["y"], dup_size = 0) #do SMOTE as much as possible
-data.plus.smote <- smote.and.split(data.smotedc, smote.sample$syn_data, oversample.ratio, tuning.ratio) #sample and split
-data.smotedc.train <- data.plus.smote$"data.train.smoted"
-data.smotedc.tune <- data.plus.smote$"data.train.tune"
+n.oversample <- round(dim(data.smotedc.og.train.pos)[1] * oversample.ratio) #calculate desired oversample size
+smote.sample = SMOTE(data.smotedc.og.train.pos[c("x1", "x2")], data.smotedc.og.train.pos["y"], dup_size = 0) #do SMOTE as much as possible
+smote.sample.selected <- smote.select(smote.sample$syn_data, oversample.ratio) #sample and split
 
-### 2.3. specify "svm error costs" as suggested in Akbani et al.
+### 2.3. synthetic samples are only added to the training set.
+data.smotedc.train <- rbind(smote.sample.selected, data.smotedc.og.train)
+data.smotedc.tune <- data.smotedc.og.tune
+
+### 2.4. specify "svm error costs" as suggested in Akbani et al.
 weight.smotedc.pos <- imbalance.ratio
 weight.smotedc.neg <- 1
 weight.smotedc <- weight.smotedc.pos * (data.smotedc.train$y == 'pos') + weight.smotedc.neg * (data.smotedc.train$y == 'neg')
