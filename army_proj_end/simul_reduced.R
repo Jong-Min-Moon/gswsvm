@@ -18,10 +18,10 @@ source("simplifier.R")
 start_time <- Sys.time() 
 
 # 1.1. simulation parameters
-replication <- 100
-n.method <- 11
-use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 1, "smotesvm" = 1, "blsmotesvm"= 1, "dbsmotesvm" = 1, "smotedc" = 1)
-#set.seed(2021)
+replication <- 2
+n.method <- 10
+use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 1, "smotesvm" = 1, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
+
 tuning.ratio <- 1/5
 test.ratio <- 1/5
 
@@ -30,10 +30,23 @@ test.ratio <- 1/5
 # 여러 상황으로 실험 중...
 
 ## 1.2. data generation parameters
-n.samples = 3000
+n.samples = 2000
 ### 1.2.1. data generation imbalance ratio
 
-imbalance.ratios = c(25)
+imbalance.ratios <- seq(10, 40, 2.5)
+
+# saving matrices
+imbal.gme <- matrix(NA, nrow = length(imbalance.ratios), ncol = n.method)
+rownames(imbal.gme) <- imbalance.ratios
+colnames(imbal.gme) <- c("gswsvm3", "gswsvm" , "svm" , "svmdc" , "clusterSVM" , "smotesvm" , "blsmotesvm", "dbsmotesvm", "smotedc", "bayes")
+
+imbal.sen <- imbal.gme
+imbal.spe <- imbal.gme
+
+imbal.gme.sd <- imbal.gme
+imbal.spe.sd <- imbal.gme
+imbal.sen.sd <- imbal.gme
+
 for (imbalance.ratio in imbalance.ratios){
 
 #imbalance.ratio <- 30 ## MAJOR PARAMETER
@@ -50,8 +63,8 @@ cost.ratio.og.syn <- cost.ratio
 ### since the performance may vary w.r.t to this quantity,
 ### we treat this as s hyperparameter and
 imbalance.ratio.s <- imbalance.ratio /4
-#pi.s.pos <- c(pi.pos*1.25, pi.pos*1.5, pi.pos*1.75, pi.pos*2, pi.pos*2.25, pi.pos*2.5, pi.pos*3, pi.pos*3.5, pi.pos*4)
-#pi.s.pos <- c(pi.pos*10 )
+
+
 pi.s.pos  <- 1 / (1 + imbalance.ratio.s)
 pi.s.neg <- 1 - pi.s.pos
 
@@ -874,11 +887,30 @@ svm.gme[rep,n.model] <- model.eval.bayes$gme
 
 } #replication bracket
 
-write.table(svm.gme,"gme_result.csv")
-write.table(svm.sen,"sen_result.csv")
-write.table(svm.spe,"spe_result.csv")
+# save all replications
+write.table(svm.gme,
+            paste(
+              "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/gme_result",
+              imbalance.ratio, ".csv", sep = "") )
+write.table(svm.sen,
+            paste(
+            "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/sen_result",
+            imbalance.ratio, ".csv", sep = "") )
+write.table(svm.spe,
+            paste(
+            "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/spe_result",
+            imbalance.ratio, ".csv", sep = "") )
 
-sink(file = "output.txt", append = TRUE)
+imbal.gme[as.character(imbalance.ratio), ] <-apply(svm.gme, 2, mean)
+imbal.spe[as.character(imbalance.ratio), ] <-apply(svm.spe, 2, mean)
+imbal.sen[as.character(imbalance.ratio), ] <-apply(svm.sen, 2, mean)
+
+imbal.gme.sd[as.character(imbalance.ratio), ] <-apply(svm.gme, 2, sd)
+imbal.spe.sd[as.character(imbalance.ratio), ] <-apply(svm.spe, 2, sd)
+imbal.sen.sd[as.character(imbalance.ratio), ] <-apply(svm.sen, 2, sd)
+
+
+sink(file = "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/output.txt", append = TRUE)
 print("---------------------------------")
 print("imbalance ratio")
 print(imbalance.ratio)
@@ -898,35 +930,10 @@ print(end_time - start_time)
 sink(file = NULL)
 } #imbalance ratio trials
 
+write.table(imbal.gme,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_gme_result.csv")
+write.table(imbal.spe,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_spe_result.csv")
+write.table(imbal.sen,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_sen_result.csv")
+write.table(imbal.gme.sd,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_gme_sd_eresult.csv")
+write.table(imbal.spe.sd,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_spe_sd_eresult.csv")
+write.table(imbal.sen.sd,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_sen_sd_result.csv")
 
-#plot(svm.model.gswsvm3, data.train)
-
-#plot(gswsvm.model, data.train)
-
-
-
-plot.basic <- draw.basic(data.train, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
-#plot.bayes <-draw.bayes.rule(data.train, p.mus, n.mus, p.sigma, n.sigma, imbalance.ratio, cost.ratio)
-#plot.wsvm1 <- draw.svm.rule(data.gswsvm.train[c("x1","x2")], gswsvm3.model, color = 'green', cutoff = 0)
-#plot.wsvm2 <- draw.svm.rule(data.gswsvm.train[c("x1","x2")], gswsvm.model, color = 'green', cutoff = 0)
-#plot.svm <- draw.svm.rule(data.test, svm.model, color = 'orange')
-
-#plot.og <- draw.basic(data.train, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
-
-#three<-plot.basic + plot.bayes + plot.wsvm1
-#two <- plot.basic + plot.bayes + plot.wsvm2
-#grid.arrange(plot.og, three, two, nrow=1, ncol=3)
-
-#library(gridExtra)
-
-#################################################################################
-# Bayes Rule
-#################################################################################
-
-# 
-# gswsvm.grid <- get.svm.decision.values.grid(data.range, gswsvm.model)
-# gswsvm.heatmap <- ggplot(gswsvm.grid, aes(x1, x2)) +
-#   geom_raster(aes(fill = z))
-# plot_gg(gswsvm.heatmap, multicore = TRUE, width = 8, height = 8, scale = 300,
-#         zoom = 0.6, phi = 60,
-#         background = "#afceff",shadowcolor = "#3a4f70")
