@@ -18,7 +18,7 @@ source("simplifier.R")
 start_time <- Sys.time() 
 
 # 1.1. simulation parameters
-replication <- 2
+replication <- 100
 n.method <- 10
 use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 1, "smotesvm" = 1, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 
@@ -33,7 +33,7 @@ test.ratio <- 1/5
 n.samples = 2000
 ### 1.2.1. data generation imbalance ratio
 
-imbalance.ratios <- seq(10, 40, 2.5)
+imbalance.ratios <-  c(10)
 
 # saving matrices
 imbal.gme <- matrix(NA, nrow = length(imbalance.ratios), ncol = n.method)
@@ -48,7 +48,7 @@ imbal.spe.sd <- imbal.gme
 imbal.sen.sd <- imbal.gme
 
 for (imbalance.ratio in imbalance.ratios){
-
+cat("imbalance.ratio :",imbalance.ratio)
 #imbalance.ratio <- 30 ## MAJOR PARAMETER
 
 
@@ -784,27 +784,29 @@ if (use.method$"dbsmotesvm"){ #use this method or NOT
 # Method 9. SMOTEDC
 #################################################################################
 n.model <- 9
-set.seed(rep)
+set.seed(rep) # for reproductible result
 
-if (use.method$"smotedc"){ #use this method or NOT
+if (use.method$"smotedc"){ #use this method or NOT, for flexible comparison
     
-  # 1. Apply smote to the positive class
+# 1. Apply smote to the positive class
     
-    ## 1.1. copy the training dataset, since oversampling would result to modified dataset.
-    data.smotedc <- data.train 
-    data.smotedc.pos.idx <- rownames(data.smotedc)[(data.smotedc$y)=="pos"]
+## 1.1. copy the training dataset, since oversampling would result to modified dataset.
+data.smotedc <- data.train 
+
+## 1.2. TUNING
+### 1.2.1. prepare a data.frame for storing the hyperparamter tuning results
+tuning.criterion.values.smotedc <- create.tuning.criterion.storage(list("pi.s.pos" = pi.s.pos, "c" = param.set.c, "gamma" = param.set.gamma))
     
-    ## 1.2. TUNING
-    tuning.criterion.values.smotedc <- create.tuning.criterion.storage(list("pi.s.pos" = pi.s.pos, "c" = param.set.c, "gamma" = param.set.gamma))
-    
-    for (k in 1 : length(pi.s.pos)){ #loop over pi.s.pos
+for (k in 1 : length(pi.s.pos)){ #loop over pi.s.pos
       
-      ### 1.2.1. Oversample using smote, and split into training and tuning set
-      smote.sample = SMOTE(data.smotedc[c("x1", "x2")], data.smotedc["y"], dup_size = 0)
-      
-      data.plus.smote <- smote.and.split(data.smotedc, smote.sample$syn_data, oversample.ratio[k], tuning.ratio)
-      data.smotedc.train <- data.plus.smote$"data.train.og.train"
-      data.smotedc.tune <- data.plus.smote$"data.train.og.tune"
+### 1.2.2. Oversample using SMOTE, and split into training and tuning set
+
+### 1.2.2.1. do SMOTE as much as possible, and randomly select samples of designated size
+### this is due to the limit of the implementation of smotefamily package: it cannot specifiy the oversample size.
+  smote.sample = SMOTE(data.smotedc[c("x1", "x2")], data.smotedc["y"], dup_size = 0) #do SMOTE as much as possible
+  data.plus.smote <- smote.and.split(data.smotedc, smote.sample$syn_data, oversample.ratio[k], tuning.ratio)
+  data.smotedc.train <- data.plus.smote$"data.train.og.train"
+  data.smotedc.tune <- data.plus.smote$"data.train.og.tune"
       
       weight.smotedc.neg <- sum(data.smotedc.train$y == 'pos') / length(data.smotedc.train$y)
       weight.smotedc.pos <- sum(data.smotedc.train$y == 'neg') / length(data.smotedc.train$y)
