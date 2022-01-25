@@ -11,7 +11,6 @@ library(gridExtra)
 
 source("data_generator.R")
 source("bayes_rule.R")
-source("zsvm.R")
 source("simplifier.R")
 #################################
 # Step 1. parameter setting
@@ -21,7 +20,7 @@ start_time <- Sys.time()
 # 1.1. simulation parameters
 replication <- 100
 n.method <- 11
-use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 1, "zsvm" = 1, "smotesvm" = 1, "blsmotesvm"= 1, "dbsmotesvm" = 1, "smotedc" = 1)
+use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 1, "smotesvm" = 1, "blsmotesvm"= 1, "dbsmotesvm" = 1, "smotedc" = 1)
 #set.seed(2021)
 tuning.ratio <- 1/5
 test.ratio <- 1/5
@@ -129,8 +128,8 @@ svm.gme <- matrix(NA, replication,n.method)
 svm.cost <- matrix(NA, replication,n.method);
 svm.gamma <- matrix(NA, replication,n.method);
 
-models.learned <- list("gswsvm3"= NULL, "gswsvm" = NULL, "svm" = NULL, "svmdc" = NULL, "clusterSVM" = NULL, "zsvm" = NULL, "smotesvm" = NULL, "blsmotesvm"= NULL, "dbsmotesvm" = NULL, "smotedc" = NULL)
-cmat <- list("gswsvm3"= NULL, "gswsvm" = NULL, "svm" = NULL, "svmdc" = NULL, "clusterSVM" = NULL, "zsvm" = NULL, "smotesvm" = NULL, "blsmotesvm"= NULL, "dbsmotesvm" = NULL, "smotedc" = NULL)
+models.learned <- list("gswsvm3"= NULL, "gswsvm" = NULL, "svm" = NULL, "svmdc" = NULL, "clusterSVM" = NULL, "smotesvm" = NULL, "blsmotesvm"= NULL, "dbsmotesvm" = NULL, "smotedc" = NULL)
+cmat <- list("gswsvm3"= NULL, "gswsvm" = NULL, "svm" = NULL, "svmdc" = NULL, "clusterSVM" = NULL,  "smotesvm" = NULL, "blsmotesvm"= NULL, "dbsmotesvm" = NULL, "smotedc" = NULL)
 
 for (rep in 1:replication){# why start with 3?
   print(cat(rep, "th run"))
@@ -522,88 +521,18 @@ svm.spe[rep,n.model]=svm.cmat[1,1]/sum(svm.cmat[1,])
 
 svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
 
-
-
 }#use this method or NOT
 
 
-#################################################################################
-# Method 6. z-SVM
-#################################################################################
-# Reference: Imam, T., Ting, K. M., Kamruzzaman, J. (2006).
-# Z-SVM: An SVM for improved classification of imbalanced data. 
-# Lecture Notes in Computer Science (Including Subseries Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics), 4304 LNAI.
-n.model <- 6
-set.seed(rep)
-
-if (use.method$"zsvm"){ #use this method or NOT
-  
-  data.zsvm.train <- data.svm.train
-  
-  # libsvm library used in e1071 sets the label of the first element as +1.
-  # z-svm only scales up the Lagrange multipliers of the +1 class,
-  # so we should a positive sample as the first instance of the training set 
-  while ( (data.zsvm.train$y)[1] == "neg" ){
-    data.zsvm.train <- data.zsvm.train[sample(1:length(data.zsvm.train$y), replace=FALSE) , ]
-  } 
-  
-  
-  param.set.zsvm.z <- c(1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6)
-  tuning.criterion.values.zsvm <- matrix(NA, nrow = length(param.set.zsvm.z)* length(param.set.c)*length(param.set.gamma), ncol = 4 )
-  tuning.criterion.values.zsvm <- data.frame(tuning.criterion.values.zsvm)
-  colnames(tuning.criterion.values.zsvm) <- c("z", "c", "gamma", "criterion")
-  
-  for (i in 1:length(param.set.c)){ #loop over c
-    for (j in 1:length(param.set.gamma)){ #loop over gamma
-      c.now <- param.set.c[i]
-      gamma.now <- param.set.gamma[j]
-      model.now <- svm(y ~ ., data = data.svm.train, gamma = gamma.now, cost = c.now, kernel="radial", scale = FALSE)
-      for (k in 1:length(param.set.zsvm.z)){ #loop over z
-        row.idx.now <- (i-1) * length(param.set.zsvm.z)*length(param.set.c) + (j-1) * length(param.set.c) + k
-        z.now = param.set.zsvm.z[k]
-        
-        y.pred.now <- zsvm.predict(data.svm.tune[1:2], model.now, gamma.now, z.now)
-        cmat <- t(table(y.pred.now, data.svm.tune$y))
-        sen <- cmat[2,2]/sum(cmat[2,])
-        spe <- cmat[1,1]/sum(cmat[1,])
-        gme <- sqrt(sen*spe)
-        
-        tuning.criterion.values.zsvm[row.idx.now, 1:3] <- c(z.now, c.now, gamma.now)
-        tuning.criterion.values.zsvm[row.idx.now, 4] <- gme
-      }}} #hyperparameter tuning bracket
-
-  idx.sorting <- order(-tuning.criterion.values.zsvm$criterion, tuning.criterion.values.zsvm$c, tuning.criterion.values.zsvm$gamma, tuning.criterion.values.zsvm$z)
-  tuning.criterion.values.zsvm <- tuning.criterion.values.zsvm[idx.sorting, ]
-  param.best <- tuning.criterion.values.zsvm[1,]
-  param.zsvm.z <- param.best$z
-  param.zsvm.c <- param.best$c
-  param.zsvm.gamma <- param.best$gamma
-  
-  #fit and evalutate performance on the test set
-  zsvm.model <- svm(y ~., data = data.svm.train, gamma = param.zsvm.gamma, cost=param.zsvm.c, kernel="radial", scale = FALSE)
-  zsvm.pred <- zsvm.predict(data.test[1:2], zsvm.model, param.zsvm.gamma, param.zsvm.z)
-  svm.cmat=t(table(zsvm.pred, data.test$y))
-  svm.cmat
-  svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
-  svm.sen[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
-  svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
-  svm.spe[rep,n.model]=svm.cmat[1,1]/sum(svm.cmat[1,])
-  
-  svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
-  } #use this method or NOT bracket
-
-
-
-
 
 
 #################################################################################
-# Method 7. SMOTE
+# Method 6. SMOTE
 #################################################################################
 # Reference: N. V. Chawla, K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer,
 # “SMOTE: Synthetic minority over-sampling technique,”
 # J. Artif. Intell.Res., vol. 16, no. 1, pp. 321–357, 2002.
-n.model <- 7
+n.model <- 6
 set.seed(rep)
 
 if (use.method$"smotesvm"){ #use this method or NOT
@@ -679,11 +608,11 @@ if (use.method$"smotesvm"){ #use this method or NOT
 
 
 #################################################################################
-# Method 8. Borderline SMOTE-SVM
+# Method 7. Borderline SMOTE-SVM
 #################################################################################
 # Reference: 
 
-n.model <- 8
+n.model <- 7
 set.seed(rep)
 
 if (use.method$"blsmotesvm"){ #use this method or NOT
@@ -759,11 +688,11 @@ if (use.method$"blsmotesvm"){ #use this method or NOT
 
 
 #################################################################################
-# Method 9. DB SMOTE-SVM
+# Method 8. DB SMOTE-SVM
 #################################################################################
 # Reference: 
 
-n.model <- 9
+n.model <- 8
 set.seed(rep)
 
 if (use.method$"dbsmotesvm"){ #use this method or NOT
@@ -839,9 +768,9 @@ if (use.method$"dbsmotesvm"){ #use this method or NOT
 
 
 #################################################################################
-# Method 10. SMOTEDC
+# Method 9. SMOTEDC
 #################################################################################
-n.model <- 10
+n.model <- 9
 set.seed(rep)
 
 if (use.method$"smotedc"){ #use this method or NOT
@@ -974,7 +903,6 @@ sink(file = NULL)
 
 #plot(gswsvm.model, data.train)
 
-#plot(zsvm.model, data.test)
 
 
 plot.basic <- draw.basic(data.train, col.p = "blue", col.n = "red", alpha.p = 0.3, alpha.n = 0.3)
