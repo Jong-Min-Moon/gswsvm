@@ -22,3 +22,28 @@
  [7]         NA         NA 0.01488646
 [10] 0.05861543
 Time difference of 5.499233 mins
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 10
+[1] "gme"
+ [1]        NA        NA        NA
+ [4]        NA        NA        NA
+ [7]        NA        NA 0.6502966
+[10] 0.8009189
+[1] "sen"
+ [1]        NA        NA        NA
+ [4]        NA        NA        NA
+ [7]        NA        NA 0.4990137
+[10] 0.7021812
+[1] "spe"
+ [1]        NA        NA        NA
+ [4]        NA        NA        NA
+ [7]        NA        NA 0.8709777
+[10] 0.9161297
+[1] "sen sd"
+ [1]         NA         NA
+ [3]         NA         NA
+ [5]         NA         NA
+ [7]         NA         NA
+ [9] 0.14102340 0.07530845
+Time difference of 29.86206 mins
