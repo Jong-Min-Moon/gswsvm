@@ -26,7 +26,7 @@ get.gmc.oversample <-function(gmc.model.pos, data.gswsvm.pos, oversample.ratio){
   
   gmc.index <- sample(x = 1:G, size = n.oversample, replace = T, prob = prob) #randomly assign group, according to the learned group membership probability.
   data.gmc <- data.frame(matrix(NA, n.oversample, d + 1)) #initialize the oversampled data storing matrix
-  variables.x <- colnames(data.gswsvm.pos)[-1]
+  variables.x <- colnames(data.gswsvm.pos)[-(d+1)]
   colnames(data.gmc) <- c(variables.x ,c("y"))
   
   #3. generate samples

@@ -1,2 +1,2 @@
 "gswsvm3" "gswsvm" "svm" "svmdc" "clusterSVM" "smotesvm" "blsmotesvm" "dbsmotesvm" "smotedc" "bayes"
-"10" NA NA NA NA NA NA NA NA 0.870977736714123 0.916129748471416
+"10" 0.910319223145509 NA NA NA NA NA NA NA 0.877126714807063 0.913053274249724
