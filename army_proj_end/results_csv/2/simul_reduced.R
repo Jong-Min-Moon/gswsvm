@@ -15,15 +15,12 @@ source("simplifier.R")
 #################################
 # Step 1. parameter setting
 ############))#####################
-trial.number <- 3
-direc <- paste0("/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/", trial.number)
-
 start_time <- Sys.time() 
 
 # 1.1. simulation parameters
 replication <- 100
 n.method <- 10
-use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
+use.method <- list("gswsvm3"= 1, "gswsvm" = 0, "svm" = 0, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 
 tuning.ratio <- 1/5
 test.ratio <- 1/5
@@ -264,13 +261,13 @@ data.gswsvm.train.pos <- data.gswsvm.train[data.gswsvm.train$y == "pos", ]
 gmc.model.pos <- Mclust(data.gswsvm.train.pos[c("x1", "x2")]) 
 data.gmc <- get.gmc.oversample(gmc.model.pos, data.gswsvm.train.pos, oversample.ratio)
 
+## 2.3. L function in Lin et al.'s paper  
+L.vector.tune.gswsvm = (data.gswsvm.tune$y == "pos") * L.og + (data.gswsvm.tune$y == "neg") * L.neg
+L.vector.train.gswsvm = (data.gswsvm.train$y == "pos") * L.og + (data.gswsvm.train$y == "neg") * L.neg 
 
-## 2.3. Combine original positive and synthetic positive
+## 2.4. Combine original positive and synthetic positive
 data.gswsvm.train <- rbind(data.gmc$"data.gmc.train", data.gswsvm.train)
-
-## 2.4. L function in Lin et al.'s paper  
-L.vector.tune.gswsvm = (data.gswsvm.tune$y == "pos") * L.pos + (data.gswsvm.tune$y == "neg") * L.neg
-L.vector.train.gswsvm = (data.gswsvm.train$y == "pos") * L.pos + (data.gswsvm.train$y == "neg") * L.neg 
+L.vector.train.gswsvm <- c(rep(L.syn, length(data.gmc$"data.gmc.train"$y)), L.vector.train.gswsvm) # add L function values for synthetic samples
   
 ## 2.5. loop over c and gamma and calculate the tuning criterion(sample expected misclassification cost in Lin et al.'s paper)
 for (i in 1:length(param.set.c)){ #loop over c
@@ -820,12 +817,26 @@ svm.gme[rep,n.model] <- model.eval.bayes$gme
 } #replication bracket
 
 # save all replications
-write.csv(svm.gme, paste0(direc, "/gme_result", imbalance.ratio, ".csv"))
-write.csv(svm.spe, paste0(direc, "/spe_result", imbalance.ratio, ".csv"))
-write.csv(svm.sen, paste0(direc, "/sen_result", imbalance.ratio, ".csv"))
-write.csv(svm.acc, paste0(direc, "/acc_result", imbalance.ratio, ".csv"))
-write.csv(svm.pre, paste0(direc, "/pre_result", imbalance.ratio, ".csv"))
-
+write.table(svm.gme,
+            paste(
+              "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/gme_result",
+              imbalance.ratio, ".csv", sep = "") )
+write.table(svm.sen,
+            paste(
+            "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/sen_result",
+            imbalance.ratio, ".csv", sep = "") )
+write.table(svm.spe,
+            paste(
+            "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/spe_result",
+            imbalance.ratio, ".csv", sep = "") )
+write.table(svm.acc,
+            paste(
+              "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/acc_result",
+              imbalance.ratio, ".csv", sep = "") )
+write.table(svm.pre,
+            paste(
+              "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/pre_result",
+              imbalance.ratio, ".csv", sep = "") )
 
 imbal.gme[as.character(imbalance.ratio), ] <-apply(svm.gme, 2, mean)
 imbal.spe[as.character(imbalance.ratio), ] <-apply(svm.spe, 2, mean)
@@ -841,7 +852,7 @@ imbal.pre.sd[as.character(imbalance.ratio), ] <-apply(svm.pre, 2, sd)
 
 
 
-sink(file = paste0(direc, "/output.txt"), append = TRUE)
+sink(file = "/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/output.txt", append = TRUE)
 print("---------------------------------")
 print("imbalance ratio")
 print(imbalance.ratio)
@@ -861,15 +872,10 @@ print(end_time - start_time)
 sink(file = NULL)
 } #imbalance ratio trials
 
-write.csv(imbal.gme, paste0(direc, "/imbal_gme_result.csv"))
-write.csv(imbal.spe, paste0(direc, "/imbal_spe_result.csv"))
-write.csv(imbal.sen, paste0(direc, "/imbal_sen_result.csv"))
-write.csv(imbal.acc, paste0(direc, "/imbal_acc_result.csv"))
-write.csv(imbal.pre, paste0(direc, "/imbal_spe_result.csv"))
-
-write.csv(imbal.gme.sd, paste0(direc, "/imbal_gme_sd_result.csv"))
-write.csv(imbal.spe.sd, paste0(direc, "/imbal_spe_sd_result.csv"))
-write.csv(imbal.sen.sd, paste0(direc, "/imbal_sen_sd_result.csv"))
-write.csv(imbal.acc.sd, paste0(direc, "/imbal_acc_sd_result.csv"))
-write.csv(imbal.pre.sd, paste0(direc, "/imbal_pre_sd_result.csv"))
+write.table(imbal.gme,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_gme_result.csv")
+write.table(imbal.spe,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_spe_result.csv")
+write.table(imbal.sen,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_sen_result.csv")
+write.table(imbal.gme.sd,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_gme_sd_eresult.csv")
+write.table(imbal.spe.sd,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_spe_sd_eresult.csv")
+write.table(imbal.sen.sd,"/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/2/imbal_sen_sd_result.csv")
 
