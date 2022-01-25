@@ -383,8 +383,9 @@ set.seed(rep)
 # 3.1. The class weights are given based on the method of the paper above:
 # negative class : # of positive training samples / # of total training samples
 # positive class : # of negative training samples / # of total training samples
-weight.svmdc.neg <- sum(data.svm.train$y == 'pos') / length(data.svm.train$y)
-weight.svmdc.pos <- sum(data.svm.train$y == 'neg') / length(data.svm.train$y)
+weight.svmdc.pos <- imbalance.ratio
+weight.svmdc.neg <- 1
+
 
 weight.svmdc <- weight.svmdc.pos * (data.svm.train$y == 'pos') + weight.svmdc.neg * (data.svm.train$y == 'neg')
 
@@ -417,16 +418,14 @@ param.svmdc.gamma <- tuning.criterion.values.svmdc[1,2]
 
 #fit and evaluate performance on the test set
 svmdc.model <- wsvm(y~., weight = weight.svmdc, data = data.svm.train, kernel="radial", gamma=param.svmdc.gamma, cost=param.svmdc.c)
-
 svmdc.pred <- predict(svmdc.model, data.test[1:2])
 
-svm.cmat <- table(data.test$y, svmdc.pred)
-svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
-svm.sen[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
-svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
-svm.spe[rep,n.model]=svm.cmat[1,1]/sum(svm.cmat[1,])
-
-svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
+svm.cmat <- table("truth" = data.test$y, "svmdc.pred" = svmdc.pred)
+svm.acc[rep,n.model] <- (svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
+svm.sen[rep,n.model] <- svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
+svm.pre[rep,n.model] <- svm.cmat[2,2]/sum(svm.cmat[,2])
+svm.spe[rep,n.model] <- svm.cmat[1,1]/sum(svm.cmat[1,])
+svm.gme[rep,n.model] <- sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
 } #use this method or NOT
 
 #################################################################################
