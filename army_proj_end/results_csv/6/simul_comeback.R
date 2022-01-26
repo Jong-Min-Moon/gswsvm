@@ -15,13 +15,13 @@ source("simplifier.R")
 #################################
 # Step 1. parameter setting
 ############))#####################
-trial.number <- 5
+trial.number <- 6
 direc <- paste0("/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/", trial.number)
 
 start_time <- Sys.time() 
 
 # 1.1. simulation parameters
-replication <- 100
+replication <- 5
 n.method <- 10
 use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 
@@ -101,26 +101,26 @@ L.og <- c.og * pi.s.neg * pi.pos
 
 
 #checkerboard data
-p.mean1 <- c(0.5,-5);
-#p.mean2 <- c(8,-5);
-p.mean3 <- c(-4.5,0);
-p.mean4 <- c(5.5,0);
-p.mean5 <- c(.5,5);
-#p.mean6 <- c(8,5);
-p.mus <- rbind(p.mean1, p.mean3, p.mean4, p.mean5)
+p.mean1 <- c(-2,-5);
+p.mean2 <- c(8,-5);
+p.mean3 <- c(-7,0);
+p.mean4 <- c(3,0);
+p.mean5 <- c(-2,5);
+p.mean6 <- c(8,5);
+p.mus <- rbind(p.mean1, p.mean2, p.mean3, p.mean4, p.mean5, p.mean6)
 p.sigma <- matrix(c(2.5,0,0,2.5),2,2)
 
-n.mean1 <- c(-4.5,-5)
-n.mean2 <- c(5.5,-5);
-n.mean3 <- c(.5,0);
-#n.mean4 <- c(8,0);
-n.mean5 <- c(-4.5,5);
-n.mean6 <- c(4.5,5);
+n.mean1 <- c(-7,-5)
+n.mean2 <- c(3,-5);
+n.mean3 <- c(-2,0);
+n.mean4 <- c(8,0);
+n.mean5 <- c(-7,5);
+n.mean6 <- c(2,5);
 
 
 
-n.mus <- rbind(n.mean1,n.mean2,n.mean3, n.mean5, n.mean6)
-n.sigma <- matrix(c(3.5,0,0,3.5),2,2) 
+n.mus <- rbind(n.mean1,n.mean2,n.mean3,n.mean4, n.mean5, n.mean6)
+n.sigma <- matrix(c(4,0,0,4),2,2)
 
 param.set.c = 2^(-5 : 5); 
 param.set.gamma = 2^(-5 : 5);

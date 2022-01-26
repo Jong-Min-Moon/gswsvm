@@ -41,10 +41,11 @@ get.gmc.oversample <-function(gmc.model.pos, data.gswsvm.pos, oversample.ratio){
 } # end of the funciton get.gmc.oversample
  
 
-smote.select <- function(smote.samples, n.smote.samples){
+smote.select <- function(smote.samples, n.oversample){
   #randomly select n.oversample elements from the smote samples
-  smote.samples.selected <- smote.samples[ sample(1:n.smote.samples, n.oversample, replace = FALSE), ]
+  smote.samples.selected <- smote.samples[ sample(1:n.oversample, n.oversample, replace = FALSE), ]
   smote.samples.selected[,3] <- factor(smote.samples.selected[,3], levels = c("neg", "pos")); #smote function changes the datatype and name of the target variable; So we fix them.
+  print(smote.samples.selected)
   colnames(smote.samples.selected) <- c("x1","x2","y") 
 
   return(smote.samples.selected)

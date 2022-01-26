@@ -15,13 +15,13 @@ source("simplifier.R")
 #################################
 # Step 1. parameter setting
 ############))#####################
-trial.number <- 5
+trial.number <- 7
 direc <- paste0("/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/", trial.number)
 
 start_time <- Sys.time() 
 
 # 1.1. simulation parameters
-replication <- 100
+replication <- 5
 n.method <- 10
 use.method <- list("gswsvm3"= 1, "gswsvm" = 1, "svm" = 1, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 
@@ -70,7 +70,7 @@ cost.ratio.og.syn <- cost.ratio
 ### 1.2.2. sampling imbalance ratio(i.e. imbalance ratio after SMOTE)
 ### since the performance may vary w.r.t to this quantity,
 ### we treat this as s hyperparameter and
-imbalance.ratio.s <- imbalance.ratio /4
+imbalance.ratio.s <- imbalance.ratio /5
 
 
 pi.s.pos  <- 1 / (1 + imbalance.ratio.s)
@@ -101,26 +101,26 @@ L.og <- c.og * pi.s.neg * pi.pos
 
 
 #checkerboard data
-p.mean1 <- c(0.5,-5);
-#p.mean2 <- c(8,-5);
-p.mean3 <- c(-4.5,0);
-p.mean4 <- c(5.5,0);
-p.mean5 <- c(.5,5);
-#p.mean6 <- c(8,5);
-p.mus <- rbind(p.mean1, p.mean3, p.mean4, p.mean5)
-p.sigma <- matrix(c(2.5,0,0,2.5),2,2)
+p.mean1 <- c(-2,-5);
+p.mean2 <- c(8,-5);
+p.mean3 <- c(-7,0);
+p.mean4 <- c(3,0);
+p.mean5 <- c(-2,5);
+p.mean6 <- c(8,5);
+p.mus <- rbind(p.mean1, p.mean2, p.mean3, p.mean4, p.mean5, p.mean6)
+p.sigma <- matrix(c(2,0,0,2),2,2)
 
-n.mean1 <- c(-4.5,-5)
-n.mean2 <- c(5.5,-5);
-n.mean3 <- c(.5,0);
-#n.mean4 <- c(8,0);
-n.mean5 <- c(-4.5,5);
-n.mean6 <- c(4.5,5);
+n.mean1 <- c(-7,-5)
+n.mean2 <- c(3,-5);
+n.mean3 <- c(-2,0);
+n.mean4 <- c(8,0);
+n.mean5 <- c(-7,5);
+n.mean6 <- c(2,5);
 
 
 
-n.mus <- rbind(n.mean1,n.mean2,n.mean3, n.mean5, n.mean6)
-n.sigma <- matrix(c(3.5,0,0,3.5),2,2) 
+n.mus <- rbind(n.mean1,n.mean2,n.mean3,n.mean4, n.mean5, n.mean6)
+n.sigma <- matrix(c(3,0,0,3),2,2)
 
 param.set.c = 2^(-5 : 5); 
 param.set.gamma = 2^(-5 : 5);
@@ -769,7 +769,7 @@ smote.samples = SMOTE(X = data.smotedc.og.train[c("x1", "x2")], target = data.sm
 for (i in 1:ceiling(oversample.ratio) ){
   smote.samples <- rbind(smote.samples, SMOTE(X = data.smotedc.og.train[c("x1", "x2")], target = data.smotedc.og.train["y"], dup_size = 0)$syn_data)
 }
-smote.samples.selected <- smote.samples[ sample(1:n.oversample.smotedc, n.oversample.smotedc, replace = FALSE), ]
+smote.samples.selected <- smote.samples[ sample(1:dim(smote.samples)[1], n.oversample.smotedc, replace = FALSE), ]
 smote.samples.selected["class"] <- factor(smote.samples.selected[["class"]], levels = c("neg", "pos")); #smote function changes the datatype and name of the target variable; So we fix them.
 colnames(smote.samples.selected) <- c("x1","x2","y") 
 
