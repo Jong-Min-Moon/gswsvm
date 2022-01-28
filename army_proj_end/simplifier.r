@@ -6,6 +6,7 @@ create.tuning.criterion.storage <- function(param.set.list){
   n.comb <- prod(sapply(param.set.list, length))
   storage <- matrix(NA, nrow = n.comb, ncol = n.param + 1 ) # last column is for criterion values
   storage <- data.frame(storage)
+  storage[n.param + 1] <- 0
   colnames(storage) <- c(names(param.set.list), "criterion")
   return(storage)
 }
