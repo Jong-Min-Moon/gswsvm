@@ -258,3 +258,230 @@ Time difference of 1.281804 hours
  [5]        NA        NA        NA        NA
  [9] 0.0000000        NA
 Time difference of 1.363677 hours
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 10
+[1] "gme"
+ [1] 0.8945629        NA        NA
+ [4]        NA        NA        NA
+ [7]        NA        NA        NA
+[10]        NA
+[1] "sen"
+ [1] 0.8022222        NA        NA
+ [4]        NA        NA        NA
+ [7]        NA        NA        NA
+[10]        NA
+[1] "spe"
+ [1]  1 NA NA NA NA NA NA NA NA NA
+[1] "sen sd"
+ [1] 0.08114758         NA         NA
+ [4]         NA         NA         NA
+ [7]         NA         NA         NA
+[10]         NA
+       gswsvm3 gswsvm svm svmdc clusterSVM
+10   0.8945629     NA  NA    NA         NA
+12.5        NA     NA  NA    NA         NA
+15          NA     NA  NA    NA         NA
+17.5        NA     NA  NA    NA         NA
+20          NA     NA  NA    NA         NA
+22.5        NA     NA  NA    NA         NA
+25          NA     NA  NA    NA         NA
+27.5        NA     NA  NA    NA         NA
+30          NA     NA  NA    NA         NA
+32.5        NA     NA  NA    NA         NA
+35          NA     NA  NA    NA         NA
+37.5        NA     NA  NA    NA         NA
+40          NA     NA  NA    NA         NA
+     smotesvm blsmotesvm dbsmotesvm
+10         NA         NA         NA
+12.5       NA         NA         NA
+15         NA         NA         NA
+17.5       NA         NA         NA
+20         NA         NA         NA
+22.5       NA         NA         NA
+25         NA         NA         NA
+27.5       NA         NA         NA
+30         NA         NA         NA
+32.5       NA         NA         NA
+35         NA         NA         NA
+37.5       NA         NA         NA
+40         NA         NA         NA
+     smotedc bayes
+10        NA    NA
+12.5      NA    NA
+15        NA    NA
+17.5      NA    NA
+20        NA    NA
+22.5      NA    NA
+25        NA    NA
+27.5      NA    NA
+30        NA    NA
+32.5      NA    NA
+35        NA    NA
+37.5      NA    NA
+40        NA    NA
+       gswsvm3 gswsvm svm svmdc clusterSVM
+10   0.8945629     NA  NA    NA         NA
+12.5        NA     NA  NA    NA         NA
+15          NA     NA  NA    NA         NA
+17.5        NA     NA  NA    NA         NA
+20          NA     NA  NA    NA         NA
+22.5        NA     NA  NA    NA         NA
+25          NA     NA  NA    NA         NA
+27.5        NA     NA  NA    NA         NA
+30          NA     NA  NA    NA         NA
+32.5        NA     NA  NA    NA         NA
+35          NA     NA  NA    NA         NA
+37.5        NA     NA  NA    NA         NA
+40          NA     NA  NA    NA         NA
+     smotesvm blsmotesvm dbsmotesvm
+10         NA         NA         NA
+12.5       NA         NA         NA
+15         NA         NA         NA
+17.5       NA         NA         NA
+20         NA         NA         NA
+22.5       NA         NA         NA
+25         NA         NA         NA
+27.5       NA         NA         NA
+30         NA         NA         NA
+32.5       NA         NA         NA
+35         NA         NA         NA
+37.5       NA         NA         NA
+40         NA         NA         NA
+     smotedc bayes
+10        NA    NA
+12.5      NA    NA
+15        NA    NA
+17.5      NA    NA
+20        NA    NA
+22.5      NA    NA
+25        NA    NA
+27.5      NA    NA
+30        NA    NA
+32.5      NA    NA
+35        NA    NA
+37.5      NA    NA
+40        NA    NA
+           [,1] [,2] [,3] [,4] [,5] [,6]
+ [1,] 0.9309493   NA   NA   NA   NA   NA
+ [2,] 0.8944272   NA   NA   NA   NA   NA
+ [3,] 0.9660918   NA   NA   NA   NA   NA
+ [4,] 0.8164966   NA   NA   NA   NA   NA
+ [5,] 0.8164966   NA   NA   NA   NA   NA
+ [6,] 0.8563488   NA   NA   NA   NA   NA
+ [7,] 0.9309493   NA   NA   NA   NA   NA
+ [8,] 0.8563488   NA   NA   NA   NA   NA
+ [9,] 0.9660918   NA   NA   NA   NA   NA
+[10,] 0.9309493   NA   NA   NA   NA   NA
+[11,] 0.8944272   NA   NA   NA   NA   NA
+[12,] 0.9660918   NA   NA   NA   NA   NA
+[13,] 0.8944272   NA   NA   NA   NA   NA
+[14,] 0.8944272   NA   NA   NA   NA   NA
+[15,] 0.8563488   NA   NA   NA   NA   NA
+[16,] 0.8563488   NA   NA   NA   NA   NA
+[17,] 0.8944272   NA   NA   NA   NA   NA
+[18,] 0.8944272   NA   NA   NA   NA   NA
+[19,] 0.8944272   NA   NA   NA   NA   NA
+[20,] 0.9660918   NA   NA   NA   NA   NA
+[21,] 0.8563488   NA   NA   NA   NA   NA
+[22,] 0.8563488   NA   NA   NA   NA   NA
+[23,] 0.8944272   NA   NA   NA   NA   NA
+[24,] 0.8944272   NA   NA   NA   NA   NA
+[25,] 0.8944272   NA   NA   NA   NA   NA
+[26,] 0.8563488   NA   NA   NA   NA   NA
+[27,] 0.8164966   NA   NA   NA   NA   NA
+[28,] 0.9660918   NA   NA   NA   NA   NA
+[29,] 0.8944272   NA   NA   NA   NA   NA
+[30,] 0.9309493   NA   NA   NA   NA   NA
+      [,7] [,8] [,9] [,10]
+ [1,]   NA   NA   NA    NA
+ [2,]   NA   NA   NA    NA
+ [3,]   NA   NA   NA    NA
+ [4,]   NA   NA   NA    NA
+ [5,]   NA   NA   NA    NA
+ [6,]   NA   NA   NA    NA
+ [7,]   NA   NA   NA    NA
+ [8,]   NA   NA   NA    NA
+ [9,]   NA   NA   NA    NA
+[10,]   NA   NA   NA    NA
+[11,]   NA   NA   NA    NA
+[12,]   NA   NA   NA    NA
+[13,]   NA   NA   NA    NA
+[14,]   NA   NA   NA    NA
+[15,]   NA   NA   NA    NA
+[16,]   NA   NA   NA    NA
+[17,]   NA   NA   NA    NA
+[18,]   NA   NA   NA    NA
+[19,]   NA   NA   NA    NA
+[20,]   NA   NA   NA    NA
+[21,]   NA   NA   NA    NA
+[22,]   NA   NA   NA    NA
+[23,]   NA   NA   NA    NA
+[24,]   NA   NA   NA    NA
+[25,]   NA   NA   NA    NA
+[26,]   NA   NA   NA    NA
+[27,]   NA   NA   NA    NA
+[28,]   NA   NA   NA    NA
+[29,]   NA   NA   NA    NA
+[30,]   NA   NA   NA    NA
+       gswsvm3 gswsvm svm svmdc clusterSVM
+10   0.8022222     NA  NA    NA         NA
+12.5        NA     NA  NA    NA         NA
+15          NA     NA  NA    NA         NA
+17.5        NA     NA  NA    NA         NA
+20          NA     NA  NA    NA         NA
+22.5        NA     NA  NA    NA         NA
+25          NA     NA  NA    NA         NA
+27.5        NA     NA  NA    NA         NA
+30          NA     NA  NA    NA         NA
+32.5        NA     NA  NA    NA         NA
+35          NA     NA  NA    NA         NA
+37.5        NA     NA  NA    NA         NA
+40          NA     NA  NA    NA         NA
+     smotesvm blsmotesvm dbsmotesvm
+10         NA         NA         NA
+12.5       NA         NA         NA
+15         NA         NA         NA
+17.5       NA         NA         NA
+20         NA         NA         NA
+22.5       NA         NA         NA
+25         NA         NA         NA
+27.5       NA         NA         NA
+30         NA         NA         NA
+32.5       NA         NA         NA
+35         NA         NA         NA
+37.5       NA         NA         NA
+40         NA         NA         NA
+     smotedc bayes
+10        NA    NA
+12.5      NA    NA
+15        NA    NA
+17.5      NA    NA
+20        NA    NA
+22.5      NA    NA
+25        NA    NA
+27.5      NA    NA
+30        NA    NA
+32.5      NA    NA
+35        NA    NA
+37.5      NA    NA
+40        NA    NA
+[1] 12.66667
+[1] 38
+[1] 6
+
+Call:
+wsvm(formula = y ~ ., weight = L.vector.train.gswsvm3, 
+    data = data.gswsvm3.train, 
+    gamma = param.best.gswsvm3$gamma, 
+    cost = param.best.gswsvm3$c, 
+    kernel = "radial", scale = FALSE)
+
+
+Parameters:
+   SVM-Type:  C-classification 
+ SVM-Kernel:  radial 
+       cost:  0.0625 
+
+Number of Support Vectors:  156
+
