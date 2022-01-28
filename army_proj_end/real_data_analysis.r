@@ -48,16 +48,25 @@ national.pos.predictors <- national.pos[predictors]
 #2. manipulate the dataset
 
 #select positive vectors from the national dataset
+
+# centering and scaling of the data. all positive observations from national dataset and army dataset has PREC=0, so we omit PREC when scaling.
+preProcValues <-preProcess(rbind(national.pos.predictors, army.predictors)[c("TEMP", "WIND_SPEED", "RH")], method =c("center", "scale"))
+national.pos.predictors.for.distance <- national.pos.predictors
+national.pos.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")] <- predict(preProcValues, national.pos.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")])
+
+army.predictors.for.distance <- army.predictors
+army.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")] <- predict(preProcValues, army.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")])
+
 l2.distances.pos <- matrix(NA, nrow = nrow(national.pos), ncol = nrow(army.predictors))
 rownames(l2.distances.pos) <- rownames(national.pos.predictors)
 colnames(l2.distances.pos) <- rownames(army.predictors)
 
 
-for (army.num in rownames(army.predictors)){
-		army.vector <- unlist(army.predictors[army.num, ])
+for (army.num in rownames(army.predictors.for.distance)){
+		army.vector <- unlist(army.predictors.for.distance[army.num, ])
 		l2.distances.pos[ , army.num] <- sqrt(
 		  apply( 
-		    ( t(as.matrix(national.pos.predictors)) - army.vector )^2,
+		    ( t(as.matrix(national.pos.predictors.for.distance)) - army.vector )^2,
 		    # in R, matrix - vector is applied column-wise.
 		    # we want to subtract row-wise, so apply t().
 		    2, sum)
@@ -76,24 +85,22 @@ head(army)
 head(national)
 
 # calculate l2 distance
+# centering and scaling of the data. all positive observations from national dataset and army dataset has PREC=0, so we omit PREC when scaling.
+preProcValues <-preProcess(rbind(national.neg.predictors, army.predictors), method =c("center", "scale"))
+national.neg.predictors.for.distance <- predict(preProcValues, national.neg.predictors)
+
+army.predictors.for.distance.neg <- predict(preProcValues, army.predictors)
 
 l2.distances.neg <- matrix(NA, nrow = nrow(national.neg), ncol = nrow(army.predictors))
 rownames(l2.distances.neg) <- rownames(national.neg.predictors)
 colnames(l2.distances.neg) <- rownames(army.predictors)
 
-for (national.num in rownames(national.neg.predictors)){
-  national.vector <- national.neg.predictors[national.num, ]
-  for (army.num in rownames(army.predictors)){
-    army.vector <- army.predictors[army.num, ]
-    l2.distances.neg[national.num, army.num] <- sqrt(sum( (army.vector - national.vector)^2 ))
-  }
-}
 
 for (army.num in rownames(army.predictors)){
-  army.vector <- unlist(army.predictors[army.num, ])
+  army.vector <- unlist(army.predictors.for.distance.neg[army.num, ])
   l2.distances.neg[ , army.num] <- sqrt(
     apply( 
-      ( t(as.matrix(national.neg.predictors)) - army.vector )^2,
+      ( t(as.matrix(national.neg.predictors.for.distance)) - army.vector )^2,
       # in R, matrix - vector is applied column-wise.
       # we want to subtract row-wise, so apply t().
       2, sum)
@@ -127,7 +134,7 @@ l2.distances.neg.mean <- sort(l2.distances.neg.mean, decreasing = TRUE)
 
 
 # 1.1. simulation parameters
-replication <- 30
+replication <- 10
 n.method <- 10
 use.method <- list("gswsvm3"= 1, "gswsvm" = 0, "svm" = 0, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 0)
 
@@ -239,9 +246,11 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
     
     ### 2.1.2. split the dataset into training set and testing set by 8:2 strafitied sampling
     idx.split.test <- createDataPartition(data.full$y, p = test.ratio)
-    data.train <- data.full[ -idx.split.test$Resample1, ] # 1 - 1/4
-    data.test  <- data.full[  idx.split.test$Resample1, ] # 1/4
+    data.train <- data.full[ -idx.split.test$Resample1, ] # 1 - test.ratio
+    data.test  <- data.full[  idx.split.test$Resample1, ] # test.ratio
     
+   
+   
     # 2.1.3 try different methods
     
     
@@ -268,7 +277,13 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
         for (indicator in c(-1, 1)){ #2-fold cross validation
           data.gswsvm3.train <- data.gswsvm3[ indicator * -idx.split.gswsvm3$Resample1, ] 
           data.gswsvm3.tune  <- data.gswsvm3[ indicator * idx.split.gswsvm3$Resample1, ] 
-      
+          
+          ### 2.3. centering and scaling
+          preProcValues <-preProcess(data.gswsvm3.train, method =c("center", "scale"))
+          data.gswsvm3.train <- predict(preProcValues, data.gswsvm3.train)
+          data.gswsvm3.tune <- predict(preProcValues, data.gswsvm3.tune)
+          
+          
           ### 2.3. leran GMC model on the positive data
           data.gswsvm3.train.pos <- data.gswsvm3.train[data.gswsvm3.train$y == "pos", ]
           gmc.model.pos <- Mclust(data.gswsvm3.train.pos[ -which(colnames(data.gswsvm3.train.pos) == "y") ])#data without y
@@ -300,21 +315,37 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
         } # 5 -times
         
       
-      #### 1.2.6. get the best parameters
+      ## 3. fit the model and evalutate its performance
+      ### 3.1. get the best parameters
       idx.sorting <- order(tuning.criterion.values.gswsvm3$criterion, tuning.criterion.values.gswsvm3$c, tuning.criterion.values.gswsvm3$gamma)
       tuning.criterion.values.gswsvm3 <- tuning.criterion.values.gswsvm3[idx.sorting, ]
       param.best.gswsvm3 <- tuning.criterion.values.gswsvm3[1,]
       
-      # 1.3. with the best hyperparameter, fit the gs-wsvm
+      ### 3.2. centering and scaling
+      preProcValues <-preProcess(data.gswsvm3, method =c("center", "scale"))
+      data.gswsvm3 <- predict(preProcValues, data.gswsvm3)
+      data.gswsvm3.test <- predict(preProcValues, data.test)
+      
+      ### 3.3. learn GMC model on the positive data
+      data.gswsvm3.train.pos <- data.gswsvm3[data.gswsvm3$y == "pos", ] #on the whole training dataset = data.gswsvm3
+      gmc.model.pos <- Mclust(data.gswsvm3.train.pos[ -which(colnames(data.gswsvm3.train.pos) == "y") ])#data without y
+      data.gmc <- get.gmc.oversample(gmc.model.pos, data.gswsvm3.train.pos, oversample.ratio)
+      
+      ### 3.4. define L vector
+      L.vector.train.gswsvm3 = (data.gswsvm3$y == "pos") * L.og + (data.gswsvm3$y == "neg") * L.neg 
+      data.gswsvm3.train <- rbind(data.gmc$"data.gmc.train", data.gswsvm3)
+      L.vector.train.gswsvm3 <- c(rep(L.syn, length(data.gmc$"data.gmc.train"$y)), L.vector.train.gswsvm3) # add L function values for synthetic samples
+      
+      # 3.4. with the best hyperparameter, fit the gs-wsvm
       svm.model.gswsvm3 <- wsvm(data = data.gswsvm3.train, y ~ .,
                                 weight = L.vector.train.gswsvm3,
                                 gamma = param.best.gswsvm3$"gamma",
                                 cost = param.best.gswsvm3$"c",
                                 kernel="radial", scale = FALSE)
       
-      pred.gswsvm3 <- predict(svm.model.gswsvm3, data.test[ -which(colnames(data.test) == "y") ])
+      pred.gswsvm3 <- predict(svm.model.gswsvm3, data.gswsvm3.test[ -which(colnames(data.gswsvm3.test) == "y") ])
       
-      svm.cmat <- table("truth" = data.test$y, "pred.gswsvm3" = pred.gswsvm3)
+      svm.cmat <- table("truth" = data.gswsvm3.test$y, "pred.gswsvm3" = pred.gswsvm3)
       svm.acc[rep,n.model] <- (svm.cmat[1,1] + svm.cmat[2,2]) / sum(svm.cmat) #accuracy
       svm.sen[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[2,]) # sensitivity
       svm.pre[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[,2])
@@ -846,16 +877,23 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
       ### 2.1. prepare a data.frame for storing the hyperparamter tuning results
       tuning.criterion.values.smotedc <- create.tuning.criterion.storage(list("c" = param.set.c, "gamma" = param.set.gamma))
       
-      ### 2.2 split the dataset into a training set and a tuning set.
       for (time in 1:5){ #5-times
         for (indicator in c(-1, 1)){ #2-fold cross validation
       
       
+          ### 2.2 split the dataset into a training set and a tuning set.
           idx.split.og <- createDataPartition(data.smotedc$y, p = tuning.ratio)
           data.smotedc.og.train <- data.smotedc[indicator * -idx.split.og$Resample1, ] # 1 - tuning ratio
           data.smotedc.og.tune  <- data.smotedc[indicator *  idx.split.og$Resample1, ] # tuning ratio
           
-          ### 2.2. Oversample positive samples using SMOTE, and split into training and tuning set
+           
+          ### 2.3. centering and scaling
+          preProcValues <-preProcess(data.smotedc.og.train, method =c("center", "scale"))
+          data.smotedc.og.train <- predict(preProcValues, data.smotedc.og.train)
+          data.smotedc.og.tune <- predict(preProcValues, data.smotedc.og.tune)
+          
+
+          ### 2.4. Oversample positive samples using SMOTE, and split into training and tuning set
           ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size
           ### this is due to the limit of the implementation of smotefamily package: it cannot specifiy the oversample size.
           ### this process is done by custom function smote.and.split.
@@ -872,15 +910,15 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
           smote.samples.selected["class"] <- factor(smote.samples.selected[["class"]], levels = c("neg", "pos")); #smote function changes the datatype and name of the target variable; So we fix them.
           colnames(smote.samples.selected) <- c( colnames(data.smotedc.og.train) )  
           
-          ### 2.3. synthetic samples are only added to the training set.
+          ### 2.5. synthetic samples are only added to the training set.
           data.smotedc.train <- rbind(smote.samples.selected, data.smotedc.og.train)
           data.smotedc.tune <- data.smotedc.og.tune
           
-          ### 2.4. specify "svm error costs" as suggested in Akbani et al.
+          ### 2.6. specify "svm error costs" as suggested in Akbani et al.
           
           weight.smotedc <- L.pos * (data.smotedc.train$y == 'pos') + L.neg * (data.smotedc.train$y == 'neg')
           
-          ### 2.4. loop over c and gamma
+          ### 2.7. loop over c and gamma
           for (i in 1:length(param.set.c)){ #loop over c
             for (j in 1:length(param.set.gamma)){ #loop over gamma
               row.idx.now <- (i-1) * length(param.set.c) + j #set row index
@@ -902,17 +940,48 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
             }} # end of for loops over c and gamma
             } } # # 5 -times, 2-fold 
             
-
-      #### 2.5. get the best parameters
+      ## 3. fit the model and evalutate its performance
+      ### 3.1. get the best parameters
       idx.sorting <- order(-tuning.criterion.values.smotedc$criterion, tuning.criterion.values.smotedc$c, tuning.criterion.values.smotedc$gamma)
       tuning.criterion.values.smotedc <- tuning.criterion.values.smotedc[idx.sorting, ]
       param.best.smotedc <- tuning.criterion.values.smotedc[1,]
       
-      # 3. with the best hyperparameter, fit the svm
-      smotedc.model <- wsvm(data = data.smotedc.train, y ~ ., weight = weight.smotedc, gamma = param.best.smotedc$"gamma", cost = param.best.smotedc$"c", kernel="radial", scale = FALSE)
-      smotedc.pred  <- predict(smotedc.model, data.test[ -which(colnames(data.test) == "y") ])
+      ### 3.2. centering and scaling
+      preProcValues <-preProcess(data.smotedc, method =c("center", "scale"))
+      data.smotedc <- predict(preProcValues, data.smotedc)
+      data.smotedc.test <- predict(preProcValues, data.test)
       
-      svm.cmat <- table("truth" = data.test$y, "pred" = smotedc.pred)
+      ### 3.3. Oversample positive samples using SMOTE
+      ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size
+      ### this is due to the limit of the implementation of smotefamily package: it cannot specifiy the oversample size.
+      ### this process is done by custom function smote.and.split.
+      n.oversample.smotedc <- round( sum(data.smotedc$y == "pos") * oversample.ratio) #calculate desired oversample size
+      
+      # provide the *entire* training set, including negative samples.
+      # smote function of smotefamly requires that.
+      # dup = 0 option ensures that only the positive samples will be oversampled
+      smote.samples = SMOTE(X = data.smotedc[ -which(colnames(data.smotedc) == "y") ], target = data.smotedc["y"], dup_size = 0)$syn_data #do SMOTE as much as possible
+      for (i in 1:ceiling(oversample.ratio) ){    
+        smote.samples <- rbind(smote.samples, SMOTE(X = data.smotedc[-which(colnames(data.smotedc.og.train) == "y")], target = data.smotedc["y"], dup_size = 0)$syn_data)
+      } 
+      smote.samples.selected <- smote.samples[ sample(1:dim(smote.samples)[1], n.oversample.smotedc, replace = FALSE), ]
+      smote.samples.selected["class"] <- factor(smote.samples.selected[["class"]], levels = c("neg", "pos")); #smote function changes the datatype and name of the target variable; So we fix them.
+      colnames(smote.samples.selected) <- c( colnames(data.smotedc) )  
+      
+      ### 3.4. synthetic samples are only added to the training set.
+      data.smotedc <- rbind(smote.samples.selected, data.smotedc)
+      
+      ### 2.6. specify "svm error costs" as suggested in Akbani et al.
+      
+      weight.smotedc <- L.pos * (data.smotedc$y == 'pos') + L.neg * (data.smotedc$y == 'neg')
+      
+
+
+      # 3. with the best hyperparameter, fit the svm
+      smotedc.model <- wsvm(data = data.smotedc, y ~ ., weight = weight.smotedc, gamma = param.best.smotedc$"gamma", cost = param.best.smotedc$"c", kernel="radial", scale = FALSE)
+      smotedc.pred  <- predict(smotedc.model, data.smotedc.test[ -which(colnames(data.smotedc.test) == "y") ])
+      
+      svm.cmat <- table("truth" = data.test$y, "smotedc.pred" = smotedc.pred)
       svm.acc[rep,n.model] <-(svm.cmat[1,1] + svm.cmat[2,2]) / sum(svm.cmat)
       svm.sen[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[2,]) # same as the recall
       svm.pre[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[,2])
