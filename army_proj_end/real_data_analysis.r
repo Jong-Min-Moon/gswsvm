@@ -57,7 +57,7 @@ national.pos.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")] <- predict(p
 army.predictors.for.distance <- army.predictors
 army.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")] <- predict(preProcValues, army.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")])
 
-l2.distances.pos <- matrix(NA, 3, ncol = nrow(army.predictors))
+l2.distances.pos <- matrix(NA, nrow = nrow(national.pos), ncol = nrow(army.predictors))
 rownames(l2.distances.pos) <- rownames(national.pos.predictors)
 colnames(l2.distances.pos) <- rownames(army.predictors)
 
@@ -80,13 +80,24 @@ for (army.num in rownames(army.predictors.for.distance)){
 		  # since we applies t(), sum is applied column-wise.
 		  )
 }
-l2.distances.pos.mean <- apply(l2.distances.pos, 1, mean)
-l2.distances.pos.mean <- sort(l2.distances.pos.mean)
-new.positive.distances <- l2.distances.pos.mean[1:n.national.positive]
-new.positive.indices <- names(new.positive.distances)
-new.positive.instances <- national.pos[new.positive.indices, ]
+l2.distances.pos.kmeans <- l2.distances.pos %*% cbind(kmeans_3 ==1, kmeans_3 ==2, kmeans_3 ==3)
 
+l2.distances.pos.group1 <- sort(l2.distances.pos.kmeans[,1])
+l2.distances.pos.group2 <- sort(l2.distances.pos.kmeans[,2])
+l2.distances.pos.group3 <- sort(l2.distances.pos.kmeans[,3])
+
+new.positive.indices.group1 <- names(l2.distances.pos.group1[1:10])
+new.positive.indices.group2 <- names(l2.distances.pos.group2[1:10])
+new.positive.indices.group3 <- names(l2.distances.pos.group3[1:10])
+
+new.positive.instances <- national.pos[c(new.positive.indices.group1, new.positive.indices.group2, new.positive.indices.group3), ]
+
+colors = c(rep(1,10), rep(2,10), rep(3,10), kmeans_3)
 positive.combined <- rbind(new.positive.instances, army)
+
+p <- plot_ly(positive.combined,x = positive.combined$RH, y = positive.combined$TEMP, z = positive.combined$WIND_SPEED,
+             color = colors)
+p
 
 head(army)
 head(national)
@@ -134,7 +145,8 @@ l2.distances.neg.mean <- sort(l2.distances.neg.mean, decreasing = TRUE)
 
 
 # 1.1. simulation parameters
-replication <- 10
+replication <- 4
+kfoldtimes <- 3
 n.method <- 10
 use.method <- list("gswsvm3"= 1, "gswsvm" = 0, "svm" = 0, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 
@@ -146,7 +158,7 @@ test.ratio <- 3/8
 
 
 
-imbalance.ratios <-  seq(10, 40, 2.5)
+imbalance.ratios <-  seq(40, 100, 10)
 
 # saving matrices
 imbal.gme <- matrix(NA, nrow = length(imbalance.ratios), ncol = n.method)
@@ -273,7 +285,7 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
       ### 2.2. Split the original samples into a training set and a tuning set
       idx.split.gswsvm3 <- createDataPartition(data.gswsvm3$y, p = tuning.ratio)
       
-      for (time in 1:5){ #5-times
+      for (time in 1:kfoldtimes){ #5-times
         for (indicator in c(-1, 1)){ #2-fold cross validation
           data.gswsvm3.train <- data.gswsvm3[ indicator * -idx.split.gswsvm3$Resample1, ] 
           data.gswsvm3.tune  <- data.gswsvm3[ indicator * idx.split.gswsvm3$Resample1, ] 
@@ -877,7 +889,7 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
       ### 2.1. prepare a data.frame for storing the hyperparamter tuning results
       tuning.criterion.values.smotedc <- create.tuning.criterion.storage(list("c" = param.set.c, "gamma" = param.set.gamma))
       
-      for (time in 1:5){ #5-times
+      for (time in 1:kfoldtimes){ #5-times
         for (indicator in c(-1, 1)){ #2-fold cross validation
       
       
@@ -995,6 +1007,29 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
     
   } #replication bracket
   
+  
+  p <- plot_ly(
+    smote.samples.selected,
+    x = smote.samples.selected$RH, 
+    y = smote.samples.selected$TEMP, 
+    z = smote.samples.selected$WIND_SPEED
+    
+  )
+  
+  p
+  
+  smote.samples.gmc <- data.gmc$"data.gmc.train"
+  p2 <- plot_ly(
+    smote.samples.gmc,
+    x = smote.samples.gmc$RH, 
+    y = smote.samples.gmc$TEMP, 
+    z = smote.samples.gmc$WIND_SPEED
+    
+  )
+  
+  p2
+  
+  data.gmc
   # save all replications
   write.csv(svm.gme, paste0(direc, "/gme_result", imbalance.ratio, ".csv"))
   write.csv(svm.spe, paste0(direc, "/spe_result", imbalance.ratio, ".csv"))
