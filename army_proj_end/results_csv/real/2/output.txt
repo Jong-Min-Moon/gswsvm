@@ -1,0 +1,146 @@
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 40
+[1] "gme"
+ [1] 0.9726164        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9675090        NA
+[1] "sen"
+ [1] 0.9666667        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9500000        NA
+[1] "spe"
+ [1] 0.9798246        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9864035        NA
+[1] "sen sd"
+ [1] 0.06666667         NA         NA
+ [4]         NA         NA         NA
+ [7]         NA         NA 0.06382847
+[10]         NA
+Time difference of 9.040794 mins
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 50
+[1] "gme"
+ [1] 0.9822115        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9816294        NA
+[1] "sen"
+ [1] 0.9833333        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9833333        NA
+[1] "spe"
+ [1] 0.9814165        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9800140        NA
+[1] "sen sd"
+ [1] 0.03333333         NA         NA
+ [4]         NA         NA         NA
+ [7]         NA         NA 0.03333333
+[10]         NA
+Time difference of 21.2467 mins
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 60
+[1] "gme"
+ [1] 0.9780137        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9574805        NA
+[1] "sen"
+ [1] 0.9833333        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9333333        NA
+[1] "spe"
+ [1] 0.9730994        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9830409        NA
+[1] "sen sd"
+ [1] 0.03333333         NA         NA
+ [4]         NA         NA         NA
+ [7]         NA         NA 0.05443311
+[10]         NA
+Time difference of 36.74188 mins
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 70
+[1] "gme"
+ [1] 0.9638202        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9405873        NA
+[1] "sen"
+ [1] 0.95   NA   NA   NA   NA   NA   NA   NA
+ [9] 0.90   NA
+[1] "spe"
+ [1] 0.9782064        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9834669        NA
+[1] "sen sd"
+ [1] 0.03333333         NA         NA
+ [4]         NA         NA         NA
+ [7]         NA         NA 0.03849002
+[10]         NA
+Time difference of 56.73564 mins
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 80
+[1] "gme"
+ [1] 0.9695035        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9318350        NA
+[1] "sen"
+ [1] 0.9666667        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9166667        NA
+[1] "spe"
+ [1] 0.9728070        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9475877        NA
+[1] "sen sd"
+ [1] 0.03849002         NA         NA
+ [4]         NA         NA         NA
+ [7]         NA         NA 0.03333333
+[10]         NA
+Time difference of 1.372224 hours
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 90
+[1] "gme"
+ [1] 0.9585598        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9438608        NA
+[1] "sen"
+ [1] 0.9500000        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9166667        NA
+[1] "spe"
+ [1] 0.9684334        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9731099        NA
+[1] "sen sd"
+ [1] 0.06382847         NA         NA
+ [4]         NA         NA         NA
+ [7]         NA         NA 0.06382847
+[10]         NA
+Time difference of 1.90003 hours
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 100
+[1] "gme"
+ [1] 0.8880629        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9012693        NA
+[1] "sen"
+ [1] 0.8166667        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.8333333        NA
+[1] "spe"
+ [1] 0.9689474        NA        NA        NA
+ [5]        NA        NA        NA        NA
+ [9] 0.9761404        NA
+[1] "sen sd"
+ [1] 0.10000000         NA         NA
+ [4]         NA         NA         NA
+ [7]         NA         NA 0.06666667
+[10]         NA
+Time difference of 2.551739 hours

@@ -301,7 +301,7 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
           
           ### 2.3. leran GMC model on the positive data
           data.gswsvm3.train.pos <- data.gswsvm3.train[data.gswsvm3.train$y == "pos", ]
-          gmc.model.pos <- Mclust(data.gswsvm3.train.pos[ -which(colnames(data.gswsvm3.train.pos) == "y") ], modelNames = c("EII"))#data without y
+          gmc.model.pos <- Mclust(data.gswsvm3.train.pos[ -which(colnames(data.gswsvm3.train.pos) == "y") ])#data without y
           data.gmc <- get.gmc.oversample(gmc.model.pos, data.gswsvm3.train.pos, oversample.ratio)
       
           ## 2.3. L function in Lin et al.'s paper  
@@ -343,7 +343,7 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
       
       ### 3.3. learn GMC model on the positive data
       data.gswsvm3.train.pos <- data.gswsvm3[data.gswsvm3$y == "pos", ] #on the whole training dataset = data.gswsvm3
-      gmc.model.pos <- Mclust(data.gswsvm3.train.pos[ -which(colnames(data.gswsvm3.train.pos) == "y") ], modelNames = c("EII"))#data without y
+      gmc.model.pos <- Mclust(data.gswsvm3.train.pos[ -which(colnames(data.gswsvm3.train.pos) == "y") ])#data without y
       data.gmc <- get.gmc.oversample(gmc.model.pos, data.gswsvm3.train.pos, oversample.ratio)
       
       ### 3.4. define L vector
