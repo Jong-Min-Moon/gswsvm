@@ -57,10 +57,17 @@ national.pos.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")] <- predict(p
 army.predictors.for.distance <- army.predictors
 army.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")] <- predict(preProcValues, army.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")])
 
-l2.distances.pos <- matrix(NA, nrow = nrow(national.pos), ncol = nrow(army.predictors))
+l2.distances.pos <- matrix(NA, 3, ncol = nrow(army.predictors))
 rownames(l2.distances.pos) <- rownames(national.pos.predictors)
 colnames(l2.distances.pos) <- rownames(army.predictors)
 
+
+kmeans_3 <- kmeans(army.predictors.for.distance,3)$cluster
+
+#3d plot
+p <- plot_ly(army.predictors.for.distance,x = army.predictors.for.distance$RH, y = army.predictors.for.distance$TEMP, z = army.predictors.for.distance$WIND_SPEED,
+             color = kmeans_3)
+p
 
 for (army.num in rownames(army.predictors.for.distance)){
 		army.vector <- unlist(army.predictors.for.distance[army.num, ])
@@ -116,13 +123,6 @@ l2.distances.neg.mean <- sort(l2.distances.neg.mean, decreasing = TRUE)
 
 
 
-
-#3d plot
-#p <- plot_ly(data=data.full,
-##             x = data.full$RH, y = data.full$TEMP, z = data.full$WIND_SPEED,
-#             color = data.full$y, colors = c('#BF382A', '#0C4B8E')
-#) #
-#
 #htmlwidgets::saveWidget(p, "test.html")
 
 
@@ -136,7 +136,7 @@ l2.distances.neg.mean <- sort(l2.distances.neg.mean, decreasing = TRUE)
 # 1.1. simulation parameters
 replication <- 10
 n.method <- 10
-use.method <- list("gswsvm3"= 1, "gswsvm" = 0, "svm" = 0, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 0)
+use.method <- list("gswsvm3"= 1, "gswsvm" = 0, "svm" = 0, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
 
 tuning.ratio <- 1/2
 test.ratio <- 3/8
