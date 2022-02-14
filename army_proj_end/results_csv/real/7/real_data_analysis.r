@@ -14,7 +14,7 @@ source("data_generator.R")
 source("bayes_rule.R")
 source("zsvm.R")
 source("simplifier.R")
-trial.number = 11
+trial.number = 7
 
 start_time <- Sys.time() 
 
@@ -148,7 +148,7 @@ l2.distances.neg.mean <- sort(l2.distances.neg.mean, decreasing = TRUE)
 
 
 # 1.1. simulation parameters
-replication <- 100
+replication <- 10
 kfoldtimes <- 2
 n.method <- 10
 use.method <- list("gswsvm3"= 1, "gswsvm" = 0, "svm" = 0, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
@@ -162,7 +162,7 @@ test.ratio <- 3/8
 
 
 #imbalance.ratios <-  seq(60, 90, 10)
-imbalance.ratios <-c(80)
+imbalance.ratios <-c(80, 90)
 
 # saving matrices
 imbal.gme <- matrix(NA, nrow = length(imbalance.ratios), ncol = n.method)
@@ -211,7 +211,7 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
   ### 1.2.2. sampling imbalance ratio(i.e. imbalance ratio after SMOTE)
   ### since the performance may vary w.r.t to this quantity,
   ### we treat this as s hyperparameter and
-  imbalance.ratio.s <- imbalance.ratio / 20
+  imbalance.ratio.s <- imbalance.ratio / 15
   
   
   pi.s.pos  <- 1 / (1 + imbalance.ratio.s)

@@ -14,7 +14,7 @@ source("data_generator.R")
 source("bayes_rule.R")
 source("zsvm.R")
 source("simplifier.R")
-trial.number = 11
+trial.number = 5
 
 start_time <- Sys.time() 
 
@@ -162,7 +162,7 @@ test.ratio <- 3/8
 
 
 #imbalance.ratios <-  seq(60, 90, 10)
-imbalance.ratios <-c(80)
+imbalance.ratios <-c(80, 90)
 
 # saving matrices
 imbal.gme <- matrix(NA, nrow = length(imbalance.ratios), ncol = n.method)
@@ -188,10 +188,8 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
   n.negative <- imbalance.ratio * 38
   #negitive.distances <- l2.distances.neg.mean[1:n.negative]
   #negitive.indices <- names(negitive.distances)
-  #negative.indices.by.random <- sample( 1:dim(national.neg)[1], n.negative/2, replace = FALSE)
-  negative.indices.by.distance <- names(l2.distances.neg.mean[ seq(1, n.negative*2, 2) ])
-  
-  negitive.instances <- national.neg[, ] #Choose the samples that are most different from the army data.
+  negative.indices <- sample( 1:dim(national.neg)[1], n.negative, replace = FALSE)
+  negitive.instances <- national.neg[negative.indices, ] #Choose the samples that are most different from the army data.
   
 
   data.full <- rbind(positive.combined, negitive.instances)
@@ -203,15 +201,15 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
   pi.pos <- 1 / (1 + imbalance.ratio) # probability of a positive sample being generated
   pi.neg <- 1 - pi.pos # probability of a negative sample being generated
   
-  c.neg <- imbalance.ratio / 2
-  #c.neg <- 10
+  #c.neg <- imbalance.ratio
+  c.neg <- 10
   c.pos <- 1
   cost.ratio <- c.neg / c.pos
   cost.ratio.og.syn <- cost.ratio
   ### 1.2.2. sampling imbalance ratio(i.e. imbalance ratio after SMOTE)
   ### since the performance may vary w.r.t to this quantity,
   ### we treat this as s hyperparameter and
-  imbalance.ratio.s <- imbalance.ratio / 20
+  imbalance.ratio.s <- imbalance.ratio /5
   
   
   pi.s.pos  <- 1 / (1 + imbalance.ratio.s)

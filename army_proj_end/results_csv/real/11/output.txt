@@ -1,0 +1,22 @@
+[1] "---------------------------------"
+[1] "imbalance ratio"
+[1] 80
+[1] "gme"
+ [1] 0.8341512        NA        NA
+ [4]        NA        NA        NA
+ [7]        NA        NA 0.8210205
+[10]        NA
+[1] "sen"
+ [1] 0.734    NA    NA    NA    NA    NA
+ [7]    NA    NA 0.712    NA
+[1] "spe"
+ [1] 0.9564587        NA        NA
+ [4]        NA        NA        NA
+ [7]        NA        NA 0.9576107
+[10]        NA
+[1] "sen sd"
+ [1] 0.1314667        NA        NA
+ [4]        NA        NA        NA
+ [7]        NA        NA 0.1389006
+[10]        NA
+Time difference of 1.129584 days
