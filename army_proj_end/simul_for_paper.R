@@ -656,14 +656,14 @@ if (use.method$"dbsmotesvm"){ #use this method or NOT, for flexible comparison
   smote.samples = ADAS(
     X = data.dbsmotesvm.og.train[ -which(colnames(data.dbsmotesvm.og.train) == "y") ],
     target = data.dbsmotesvm.og.train["y"],
-    dupSize = 0)$syn_data
+    dup_size = 0)$syn_data
   
   # 2.2.2. Then, we concatenate several SMOTE results.
   for (i in 1:ceiling(oversample.ratio) ){    
     smote.samples <- rbind(
       smote.samples,
       ADAS(X = data.dbsmotesvm.og.train[-which(colnames(data.dbsmotesvm.og.train) == "y")],
-            target = data.dbsmotesvm.og.train["y"], dupSize = 0)$syn_data)
+            target = data.dbsmotesvm.og.train["y"], dup_size = 0)$syn_data)
   } 
   
   # 2.2.3. Finally, we choose as much as we want.
