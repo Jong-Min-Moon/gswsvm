@@ -753,23 +753,18 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
       
       # When using blsmote with high imbalance ratio, sometimes the number of DANGER samples is smaller than 5(default K value in smote), causing an error.
       # So we use try and and increase k from 1 to 5. if an error occurs, the last k value is used and we go onto the next part.
-     try(
-       for (k in 1:5){
+     try( for (k in 1:5){
          smote.samples = BLSMOTE(X = data.blsmotesvm.og.train[ -which(colnames(data.blsmotesvm.og.train) == "y") ], target = data.blsmotesvm.og.train["y"], K = k, dupSize = 0)$syn_data #do SMOTE as much as possible
-       }
-     )
+       })
       
       for (i in 1:ceiling(oversample.ratio) ){    
-        smote.samples <- rbind(
-          smote.samples,
-          try(
-            for (k in 1:5){
-              smote.samples = BLSMOTE(X = data.blsmotesvm.og.train[ -which(colnames(data.blsmotesvm.og.train) == "y") ], target = data.blsmotesvm.og.train["y"], K = k, dupSize = 0)$syn_data #do SMOTE as much as possible
+          try( for (k in 1:5){
+              smote.samples_new = BLSMOTE(X = data.blsmotesvm.og.train[ -which(colnames(data.blsmotesvm.og.train) == "y") ], target = data.blsmotesvm.og.train["y"], K = k, dupSize = 0)$syn_data #do SMOTE as much as possible
             } # end of for loop inside the try
           ) #end of try
           
-          ) # end for for loop
-      } 
+        smote.samples <- rbind(smote.samples,smote.samples_new)
+      } # end for for loop
       smote.samples.selected <- smote.samples[ sample(1:dim(smote.samples)[1], n.oversample.blsmotesvm, replace = FALSE), ]
       smote.samples.selected["class"] <- factor(smote.samples.selected[["class"]], levels = c("neg", "pos")); #smote function changes the datatype and name of the target variable; So we fix them.
       colnames(smote.samples.selected) <- c( colnames(data.blsmotesvm.og.train) )  

@@ -15,7 +15,7 @@ source("simplifier.R")
 #################################
 # Step 1. parameter setting
 ############))#####################
-trial.number <- 15
+trial.number <- 18
 direc <- paste0("/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/", trial.number)
 
 start_time <- Sys.time() 
@@ -33,7 +33,7 @@ test.ratio <- 1/4
 # 여러 상황으로 실험 중...
 
 ## 1.2. data generation parameters
-n.samples = 1500
+n.samples = 2000
 ### 1.2.1. data generation imbalance ratio
 
 imbalance.ratios <-  seq(10,40,5)
@@ -55,6 +55,7 @@ imbal.sen.sd <- imbal.gme
 imbal.acc.sd <- imbal.gme
 imbal.pre.sd <- imbal.gme
 
+
 for (imbalance.ratio in imbalance.ratios){
 cat("imbalance.ratio :",imbalance.ratio, "\n")
 #imbalance.ratio <- 30 ## MAJOR PARAMETER
@@ -63,14 +64,14 @@ cat("imbalance.ratio :",imbalance.ratio, "\n")
 pi.pos <- 1 / (1 + imbalance.ratio) # probability of a positive sample being generated
 pi.neg <- 1 - pi.pos # probability of a negative sample being generated
 
-c.neg <- imbalance.ratio
+c.neg <- imbalance.ratio/2
 c.pos <- 1
 cost.ratio <- c.neg / c.pos
 cost.ratio.og.syn <- cost.ratio
 ### 1.2.2. sampling imbalance ratio(i.e. imbalance ratio after SMOTE)
 ### since the performance may vary w.r.t to this quantity,
 ### we treat this as s hyperparameter and
-imbalance.ratio.s <- imbalance.ratio / 4
+imbalance.ratio.s <- imbalance.ratio / 3
 
 
 pi.s.pos  <- 1 / (1 + imbalance.ratio.s)
@@ -120,7 +121,7 @@ n.mean6 <- c(2,5);
 
 
 n.mus <- rbind(n.mean1,n.mean2,n.mean3,n.mean4, n.mean5, n.mean6)
-n.sigma <- matrix(c(3,0,0,3),2,2)
+n.sigma <- matrix(c(2,0,0,2),2,2)
 
 param.set.c = 2^(-5 : 5); 
 param.set.gamma = 2^(-5 : 5);
@@ -137,6 +138,7 @@ svm.sen <- matrix(NA, replication,n.method)
 svm.pre <- matrix(NA, replication,n.method)
 svm.spe <- matrix(NA, replication,n.method)
 svm.gme <- matrix(NA, replication,n.method)
+
 
 svm.cost <- matrix(NA, replication,n.method);
 svm.gamma <- matrix(NA, replication,n.method);
@@ -321,7 +323,7 @@ data.svmdc.tune  <- data.svmdc[ idx.split.og$Resample1, ] # tuning ratio
 
 ### 2.4. specify "svm error costs" as suggested in Akbani et al.
 
-weight.svmdc <- L.pos * (data.svmdc.train$y == 'pos') + L.neg * (data.svmdc.train$y == 'neg')
+weight.svmdc <- imbalance.ratio * (data.svmdc.train$y == 'pos') + 1 * (data.svmdc.train$y == 'neg')
       
 ### 2.4. loop over c and gamma
 for (i in 1:length(param.set.c)){ #loop over c
@@ -562,7 +564,7 @@ if (use.method$"blsmotesvm"){ #use this method or NOT, for flexible comparison
     dupSize = 0 ,K = 3
     )$syn_data
   
-  # 2.2.2. Then, we concatenate several SMOTE results.
+  # 2.2.2. Then, we concatenfate several SMOTE results.
   for (i in 1:ceiling(oversample.ratio) ){    
     smote.samples <- rbind(
       smote.samples,
@@ -653,17 +655,29 @@ if (use.method$"dbsmotesvm"){ #use this method or NOT, for flexible comparison
   # dup = 0 option ensures that only the positive samples will be oversampled.
   
   # 2.2.1. First, do a SMOTE once.
-  smote.samples = ADAS(
-    X = data.dbsmotesvm.og.train[ -which(colnames(data.dbsmotesvm.og.train) == "y") ],
-    target = data.dbsmotesvm.og.train["y"],
-    dup_size = 0)$syn_data
+  
+  try(
+    for (k in 1:5){
+      smote.samples = BLSMOTE(
+        X = data.dbsmotesvm.og.train[ -which(colnames(data.dbsmotesvm.og.train) == "y") ],
+        target = data.dbsmotesvm.og.train["y"],
+        dupSize = 0)$syn_data
+    }
+  )
+  
+  
   
   # 2.2.2. Then, we concatenate several SMOTE results.
-  for (i in 1:ceiling(oversample.ratio) ){    
-    smote.samples <- rbind(
-      smote.samples,
-      ADAS(X = data.dbsmotesvm.og.train[-which(colnames(data.dbsmotesvm.og.train) == "y")],
-            target = data.dbsmotesvm.og.train["y"], dup_size = 0)$syn_data)
+  for (i in 1:ceiling(oversample.ratio) ){  
+    try(
+      for (k in 1:5){
+        smote.samples_new = BLSMOTE(
+          X = data.dbsmotesvm.og.train[ -which(colnames(data.dbsmotesvm.og.train) == "y") ],
+          target = data.dbsmotesvm.og.train["y"],
+          dupSize = 0)$syn_data
+      }
+    )
+    smote.samples <- rbind(smote.samples, smote.samples_new)
   } 
   
   # 2.2.3. Finally, we choose as much as we want.
