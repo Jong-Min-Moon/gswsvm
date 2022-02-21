@@ -162,12 +162,12 @@ test.ratio <- 3/8
 
 
 #imbalance.ratios <-  seq(60, 90, 10)
-imbalance.ratios <-c(80)
+imbalance.ratios <-c(30)
 
 # saving matrices
 imbal.gme <- matrix(NA, nrow = length(imbalance.ratios), ncol = n.method)
 rownames(imbal.gme) <- imbalance.ratios
-colnames(imbal.gme) <- c("gswsvm3", "gswsvm" , "svm" , "svmdc" , "clusterSVM" , "smotesvm" , "blsmotesvm", "dbsmotesvm", "smotedc", "bayes")
+colnames(imbal.gme) <- c("gswsvm3", "svm" , "svmdc" , "clusterSVM" , "smotesvm" , "blsmotesvm", "dbsmotesvm", "bayes")
 
 imbal.sen <- imbal.gme
 imbal.spe <- imbal.gme
@@ -211,7 +211,7 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
   ### 1.2.2. sampling imbalance ratio(i.e. imbalance ratio after SMOTE)
   ### since the performance may vary w.r.t to this quantity,
   ### we treat this as s hyperparameter and
-  imbalance.ratio.s <- imbalance.ratio / 20
+  imbalance.ratio.s <- imbalance.ratio / 3
   
   
   pi.s.pos  <- 1 / (1 + imbalance.ratio.s)
@@ -377,88 +377,17 @@ for (imbalance.ratio in imbalance.ratios){ #loop over imbalance ratios
       #cmat$"gswsvm3" <- svm.cmat #save confusion matrix for this model, for future analysis
     }# use this method or NOT
 
-    #################################################################################
-    # Method 2. GS-WSVM
-    #################################################################################
-    if (use.method$"gswsvm"){ #use this method or NOT
-      n.model <- 2
-      set.seed(rep) # for reproducible result
-      
-      ## 1. copy the training dataset so that the oversampling here doesn't make the dataset for other methods.
-      data.gswsvm <- data.train 
-      
-      ## 2. Hyperparamter tuning procedure
-      
-      ### 2.1. prepare a data.frame for storing the hyperparamter tuning results
-      tuning.criterion.values.gswsvm <- create.tuning.criterion.storage(list("c" = param.set.c, "gamma" = param.set.gamma))
-      
-      ### 2.2. Split the original samples into a training set and a tuning set
-      idx.split.gswsvm <- createDataPartition(data.gswsvm$y, p = tuning.ratio)
-      data.gswsvm.train <- data.gswsvm[-idx.split.gswsvm$Resample1, ] # 1 - tuning.ratio
-      data.gswsvm.tune  <- data.gswsvm[ idx.split.gswsvm$Resample1, ] # tuning.ratio
-      
-      ### 2.3. leran GMC model on the positive data
-      data.gswsvm.train.pos <- data.gswsvm.train[data.gswsvm.train$y == "pos", ]
-      gmc.model.pos <- Mclust(data.gswsvm.train.pos[ -which(colnames(data.gswsvm.train.pos) == "y") ]) 
-      data.gmc <- get.gmc.oversample(gmc.model.pos, data.gswsvm.train.pos, oversample.ratio)
-      
-      
-      ## 2.3. Combine original positive and synthetic positive
-      data.gswsvm.train <- rbind(data.gmc$"data.gmc.train", data.gswsvm.train)
-      
-      ## 2.4. L function in Lin et al.'s paper  
-      L.vector.tune.gswsvm = (data.gswsvm.tune$y == "pos") * L.pos + (data.gswsvm.tune$y == "neg") * L.neg
-      L.vector.train.gswsvm = (data.gswsvm.train$y == "pos") * L.pos + (data.gswsvm.train$y == "neg") * L.neg 
-      
-      ## 2.5. loop over c and gamma and calculate the tuning criterion(sample expected misclassification cost in Lin et al.'s paper)
-      for (i in 1:length(param.set.c)){ #loop over c
-        for (j in 1:length(param.set.gamma)){ #loop over gamma
-          row.idx.now <- (i-1) * length(param.set.gamma) + j #set row index
-          
-          c.now <- param.set.c[i]
-          gamma.now <- param.set.gamma[j]
-          
-          model.now <- wsvm(data = data.gswsvm.train, y ~ ., weight = L.vector.train.gswsvm, gamma = gamma.now, cost = c.now, kernel="radial", scale = FALSE)# fit weighted svm model
-          
-          y.pred.now <- predict(model.now, data.gswsvm.tune[ -which(colnames(data.gswsvm.tune) == "y") ]) # 
-          tuning.criterion.values.gswsvm[row.idx.now, c("c", "gamma")] <- c(c.now, gamma.now)
-          tuning.criterion.values.gswsvm[row.idx.now, "criterion"] <- sum((y.pred.now != data.gswsvm.tune$y) * L.vector.tune.gswsvm)/(length(data.gswsvm.tune$y)) #tuning criterion introduced in Lin et
-          
-        }} # end of two for loops
-      
-      #### 1.2.6. get the best parameters
-      idx.sorting <- order(tuning.criterion.values.gswsvm$criterion, tuning.criterion.values.gswsvm$c, tuning.criterion.values.gswsvm$gamma)
-      tuning.criterion.values.gswsvm <- tuning.criterion.values.gswsvm[idx.sorting, ]
-      param.best.gswsvm <- tuning.criterion.values.gswsvm[1,]
-      
-      # 1.3. with the best hyperparameter, fit the gs-wsvm
-      svm.model.gswsvm <- wsvm(data = data.gswsvm.train, y ~ .,
-                               weight = L.vector.train.gswsvm,
-                               gamma = param.best.gswsvm$"gamma",
-                               cost = param.best.gswsvm$"c",
-                               kernel="radial", scale = FALSE)
-      
-      pred.gswsvm <- predict(svm.model.gswsvm, data.test[ -which(colnames(data.gswsvm3.tune) == "y") ]) 
-      
-      svm.cmat <- table("truth" = data.test$y, "pred.gswsvm" = pred.gswsvm)
-      svm.acc[rep,n.model] <- (svm.cmat[1,1] + svm.cmat[2,2]) / sum(svm.cmat) #accuracy
-      svm.sen[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[2,]) # sensitivity
-      svm.pre[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[,2])
-      svm.spe[rep,n.model] <- svm.cmat[1,1] / sum(svm.cmat[1,])
-      svm.gme[rep,n.model] <- sqrt(svm.sen[rep,n.model] * svm.spe[rep,n.model])
-      
-      cmat.gswsvm <- svm.cmat
-    }# use this method or NOT
+   
     
     
     # method 2 - x do not involve resampling,
     # so they share the same training and tuning set.
     
     #################################################################################
-    # Method 3. Standard SVM
+    # Method 2. Standard SVM
     #################################################################################
     if (use.method$"svm"){ #use this method or NOT
-      n.model <- 3
+      n.model <- 2
       set.seed(rep)
       
       # 2.1. split the training data into training and tuning set by 3:1 stratified sampling

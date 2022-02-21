@@ -298,7 +298,7 @@ svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
   
 
 #################################################################################
-# Method 4. SVMDC
+# Method 3. SVMDC
 #################################################################################
 # Reference: K. Veropoulos, C. Campbell, and N. Cristianini, 
 # “Controlling the sensi-tivity of support vector machines,”
@@ -364,7 +364,7 @@ svm.gme[rep,n.model] <- sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
   }#use this method or NOT
 
 #################################################################################
-# Method 5. ClusterSVM
+# Method 4. ClusterSVM
 #################################################################################
 # Reference: Gu, Q., & Han, J, 
 # “Clustered support vector machines”.
@@ -424,7 +424,7 @@ svm.gme[rep,n.model]=sqrt(svm.sen[rep,n.model]*svm.spe[rep,n.model])
 
 
 #################################################################################
-# Method 6. SMOTE SVM
+# Method 5. SMOTE SVM
 #################################################################################
 # Reference: N. V. Chawla, K. W. Bowyer, L. O. Hall, and W. P. Kegelmeyer,
 # “SMOTE: Synthetic minority over-sampling technique,”
@@ -527,7 +527,7 @@ if (use.method$"smotesvm"){ #use this method or NOT, for flexible comparison
 
 
 #################################################################################
-# Method 7. Borderline SMOTE-SVM
+# Method 6. Borderline SMOTE-SVM
 #################################################################################
 # Reference: 
 
@@ -561,7 +561,7 @@ if (use.method$"blsmotesvm"){ #use this method or NOT, for flexible comparison
   smote.samples = BLSMOTE(
     X = data.blsmotesvm.og.train[ -which(colnames(data.blsmotesvm.og.train) == "y") ],
     target = data.blsmotesvm.og.train["y"],
-    dupSize = 0 ,K = 3
+    dupSize = 0, K = 5, C = ceiling(n.pos / 4)
     )$syn_data
   
   # 2.2.2. Then, we concatenfate several SMOTE results.
@@ -569,7 +569,7 @@ if (use.method$"blsmotesvm"){ #use this method or NOT, for flexible comparison
     smote.samples <- rbind(
       smote.samples,
       BLSMOTE(X = data.blsmotesvm.og.train[-which(colnames(data.blsmotesvm.og.train) == "y")],
-            target = data.blsmotesvm.og.train["y"], dupSize = 0,K = 3)$syn_data)
+            target = data.blsmotesvm.og.train["y"], dupSize = 0, K = 5, C = ceiling(n.pos / 4))$syn_data)
   } 
   
   # 2.2.3. Finally, we choose as much as we want.
@@ -656,27 +656,24 @@ if (use.method$"dbsmotesvm"){ #use this method or NOT, for flexible comparison
   
   # 2.2.1. First, do a SMOTE once.
   
-  try(
-    for (k in 1:5){
-      smote.samples = BLSMOTE(
+  
+      smote.samples = DBSMOTE(
         X = data.dbsmotesvm.og.train[ -which(colnames(data.dbsmotesvm.og.train) == "y") ],
         target = data.dbsmotesvm.og.train["y"],
         dupSize = 0)$syn_data
-    }
-  )
+    
+  
   
   
   
   # 2.2.2. Then, we concatenate several SMOTE results.
   for (i in 1:ceiling(oversample.ratio) ){  
-    try(
-      for (k in 1:5){
-        smote.samples_new = BLSMOTE(
+    
+        smote.samples_new = DBSMOTE(
           X = data.dbsmotesvm.og.train[ -which(colnames(data.dbsmotesvm.og.train) == "y") ],
           target = data.dbsmotesvm.og.train["y"],
           dupSize = 0)$syn_data
-      }
-    )
+     
     smote.samples <- rbind(smote.samples, smote.samples_new)
   } 
   
