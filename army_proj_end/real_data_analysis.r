@@ -339,7 +339,7 @@ imbal.pre.sd <- imbal.gme
       param.best.gswsvm3 <- tuning.criterion.values.gswsvm3[1,]
       
       ### 3.2. centering and scaling
-      preProcValues <-preProcess(data.gswsvm3, method =c("center", "scale"))
+      preProcValues <-preProcess(data.gswsvm3[-5], method =c("center", "scale"))
       data.gswsvm3 <- predict(preProcValues, data.gswsvm3)
       data.gswsvm3.test <- predict(preProcValues, data.test)
       
@@ -398,6 +398,9 @@ imbal.pre.sd <- imbal.gme
           data.svm.train <- data.svm[ -1 * indicator * idx.split.svm, ] # 1 - 1/4
           data.svm.tune  <- data.svm[  1 * indicator * idx.split.svm, ] # 1/4
       
+          preProcValues <-preProcess(data.svm.train[-5], method =c("center", "scale"))
+          data.svm.train <- predict(preProcValues, data.svm.train)
+          data.svm.tune  <- predict(preProcValues, data.svm.tune)
       # 2.2. hyperparameter tuning w.r.t. g-mean
      
       for (i in 1:length(param.set.c)){ #loop over gamma 
@@ -472,6 +475,9 @@ imbal.pre.sd <- imbal.gme
           data.svmdc.train <- data.svmdc[ -1 * indicator * idx.split.og, ] # 1 - tuning ratio
           data.svmdc.tune  <- data.svmdc[  1 * indicator * idx.split.og, ] # tuning ratio
       
+          preProcValues <-preProcess(data.svmdc.train[-5], method =c("center", "scale"))
+          data.svmdc.train <- predict(preProcValues, data.svmdc.train)
+          data.svmdc.tune  <- predict(preProcValues, data.svmdc.tune)
       
       ### 2.4. specify "svm error costs" as suggested in Akbani et al.
       
@@ -549,8 +555,8 @@ imbal.pre.sd <- imbal.gme
           
           # scaling and centering of the data
           preProcValues <-preProcess(data.clustersvm.train[,-5], method =c("center", "scale"))
-          data.clustersvm.train[,1:4] <- predict(preProcValues, data.clustersvm.train[,-5])
-          data.clustersvm.tune[, 1:4] <- predict(preProcValues, data.clustersvm.tune[,-5]) #scale w.r.t mean and sd of training dataset
+          data.clustersvm.train <- predict(preProcValues, data.clustersvm.train)
+          data.clustersvm.tune <- predict(preProcValues, data.clustersvm.tune) #scale w.r.t mean and sd of training dataset
           
       for (i in 1:length(param.set.c)){ #loop over gamma 
         for (j in 1:length(param.set.clusteSVM.lambda)){ #loop over c
@@ -638,6 +644,11 @@ imbal.pre.sd <- imbal.gme
       ### 2.2 split the dataset into a training set and a tuning set.
       data.smotesvm.og.train <- data.smotesvm[-1 * indicator * idx.split.og, ] # 1 - tuning ratio
       data.smotesvm.og.tune  <- data.smotesvm[ 1 * indicator * idx.split.og, ] # tuning ratio
+      
+      # scaling and centering
+      preProcValues <-preProcess(data.smotesvm.og.train[-5], method =c("center", "scale"))
+      data.smotesvm.og.train <- predict(preProcValues, data.smotesvm.og.train)
+      data.smotesvm.og.tune  <- predict(preProcValues, data.smotesvm.og.tune)
       
       ### 2.2. Oversample positive samples using SMOTE, and split into training and tuning set
       ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size.
@@ -780,6 +791,10 @@ imbal.pre.sd <- imbal.gme
           ### 2.2 split the dataset into a training set and a tuning set.
           data.blsmotesvm.og.train <- data.blsmotesvm[-1 * indicator * idx.split.og, ] # 1 - tuning ratio
           data.blsmotesvm.og.tune  <- data.blsmotesvm[ 1 * indicator * idx.split.og, ] # tuning ratio
+          
+          preProcValues <-preProcess(data.blsmotesvm.og.train[-5], method =c("center", "scale"))
+          data.blsmotesvm.og.train <- predict(preProcValues, data.blsmotesvm.og.train)
+          data.blsmotesvm.og.tune  <- predict(preProcValues, data.blsmotesvm.og.tune)
           
           ### 2.2. Oversample positive samples using SMOTE, and split into training and tuning set
           ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size.
@@ -924,6 +939,10 @@ imbal.pre.sd <- imbal.gme
           ### 2.2 split the dataset into a training set and a tuning set.
           data.dbsmotesvm.og.train <- data.dbsmotesvm[-1 * indicator * idx.split.og, ] # 1 - tuning ratio
           data.dbsmotesvm.og.tune  <- data.dbsmotesvm[ 1 * indicator * idx.split.og, ] # tuning ratio
+          
+          preProcValues <-preProcess(data.dbsmotesvm.og.train[-5], method =c("center", "scale"))
+          data.dbsmotesvm.og.train <- predict(preProcValues, data.dbsmotesvm.og.train)
+          data.dbsmotesvm.og.tune  <- predict(preProcValues, data.dbsmotesvm.og.tune)
           
           ### 2.2. Oversample positive samples using SMOTE, and split into training and tuning set
           ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size.
