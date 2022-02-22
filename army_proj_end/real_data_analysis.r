@@ -289,14 +289,14 @@ imbal.pre.sd <- imbal.gme
       ### 2.2. Split the original samples into a training set and a tuning set
       
       for (time in 1:kfoldtimes){ #5-times
-        idx.split.gswsvm3 <- createDataPartition(data.gswsvm3$y, p = tuning.ratio)
+        idx.split.gswsvm3 <- createDataPartition(data.gswsvm3$y, p = tuning.ratio)$Resample1
         
         for (indicator in c(-1, 1)){ #2-fold cross validation
-          data.gswsvm3.train <- data.gswsvm3[ indicator * -idx.split.gswsvm3$Resample1, ] 
-          data.gswsvm3.tune  <- data.gswsvm3[ indicator * idx.split.gswsvm3$Resample1, ] 
+          data.gswsvm3.train <- data.gswsvm3[ -1 * indicator * idx.split.gswsvm3, ] 
+          data.gswsvm3.tune  <- data.gswsvm3[  1 * indicator * idx.split.gswsvm3, ] 
           
           ### 2.3. centering and scaling
-          preProcValues <-preProcess(data.gswsvm3.train, method =c("center", "scale"))
+          preProcValues <-preProcess(data.gswsvm3.train[-5], method =c("center", "scale"))
           data.gswsvm3.train <- predict(preProcValues, data.gswsvm3.train)
           data.gswsvm3.tune <- predict(preProcValues, data.gswsvm3.tune)
           
@@ -392,11 +392,11 @@ imbal.pre.sd <- imbal.gme
       tuning.criterion.values.svm <- create.tuning.criterion.storage(list("c" = param.set.c, "gamma" = param.set.gamma))
       
       for (time in 1:kfoldtimes){ #5-times random partition
-        idx.split.svm <- createDataPartition(data.svm$y, p = tuning.ratio)
+        idx.split.svm <- createDataPartition(data.svm$y, p = tuning.ratio)$Resample1
         
         for (indicator in c(-1, 1)){ #2-fold cross validation
-      data.svm.train <- data.svm[indicator * -idx.split.svm$Resample1, ] # 1 - 1/4
-      data.svm.tune  <- data.svm[indicator * idx.split.svm$Resample1, ] # 1/4
+          data.svm.train <- data.svm[ -1 * indicator * idx.split.svm, ] # 1 - 1/4
+          data.svm.tune  <- data.svm[  1 * indicator * idx.split.svm, ] # 1/4
       
       # 2.2. hyperparameter tuning w.r.t. g-mean
      
@@ -466,16 +466,16 @@ imbal.pre.sd <- imbal.gme
       ### 2.2 split the dataset into a training set and a tuning set.
       
       for (time in 1:kfoldtimes){ #5-times
-        idx.split.og <- createDataPartition(data.svmdc$y, p = tuning.ratio)
+        idx.split.og <- createDataPartition(data.svmdc$y, p = tuning.ratio)$Resample1
         
         for (indicator in c(-1, 1)){ #2-fold cross validation
-      data.svmdc.train <- data.svmdc[indicator*-idx.split.og$Resample1, ] # 1 - tuning ratio
-      data.svmdc.tune  <- data.svmdc[indicator* idx.split.og$Resample1, ] # tuning ratio
+          data.svmdc.train <- data.svmdc[ -1 * indicator * idx.split.og, ] # 1 - tuning ratio
+          data.svmdc.tune  <- data.svmdc[  1 * indicator * idx.split.og, ] # tuning ratio
       
       
       ### 2.4. specify "svm error costs" as suggested in Akbani et al.
       
-      weight.svmdc <- imbalance.ratio * (data.svmdc.train$y == 'pos') + 1 * (data.svmdc.train$y == 'neg')
+          weight.svmdc <- imbalance.ratio * (data.svmdc.train$y == 'pos') + 1 * (data.svmdc.train$y == 'neg')
       
       ### 2.4. loop over c and gamma
     
@@ -632,12 +632,12 @@ imbal.pre.sd <- imbal.gme
       
       
       for (time in 1:kfoldtimes){ #5-times
-        idx.split.og <- createDataPartition(data.smotesvm$y, p = tuning.ratio)
+        idx.split.og <- createDataPartition(data.smotesvm$y, p = tuning.ratio)$Resample1
         
         for (indicator in c(-1, 1)){ #2-fold cross validation
       ### 2.2 split the dataset into a training set and a tuning set.
-      data.smotesvm.og.train <- data.smotesvm[indicator*-idx.split.og$Resample1, ] # 1 - tuning ratio
-      data.smotesvm.og.tune  <- data.smotesvm[indicator* idx.split.og$Resample1, ] # tuning ratio
+      data.smotesvm.og.train <- data.smotesvm[-1 * indicator * idx.split.og, ] # 1 - tuning ratio
+      data.smotesvm.og.tune  <- data.smotesvm[ 1 * indicator * idx.split.og, ] # tuning ratio
       
       ### 2.2. Oversample positive samples using SMOTE, and split into training and tuning set
       ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size.
@@ -774,12 +774,12 @@ imbal.pre.sd <- imbal.gme
       
       
       for (time in 1:kfoldtimes){ #5-times
-        idx.split.og <- createDataPartition(data.blsmotesvm$y, p = tuning.ratio)
+        idx.split.og <- createDataPartition(data.blsmotesvm$y, p = tuning.ratio)$Resample1
         
         for (indicator in c(-1, 1)){ #2-fold cross validation
           ### 2.2 split the dataset into a training set and a tuning set.
-          data.blsmotesvm.og.train <- data.blsmotesvm[indicator*-idx.split.og$Resample1, ] # 1 - tuning ratio
-          data.blsmotesvm.og.tune  <- data.blsmotesvm[indicator* idx.split.og$Resample1, ] # tuning ratio
+          data.blsmotesvm.og.train <- data.blsmotesvm[-1 * indicator * idx.split.og, ] # 1 - tuning ratio
+          data.blsmotesvm.og.tune  <- data.blsmotesvm[ 1 * indicator * idx.split.og, ] # tuning ratio
           
           ### 2.2. Oversample positive samples using SMOTE, and split into training and tuning set
           ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size.
@@ -918,12 +918,12 @@ imbal.pre.sd <- imbal.gme
       
       
       for (time in 1:kfoldtimes){ #5-times
-        idx.split.og <- createDataPartition(data.dbsmotesvm$y, p = tuning.ratio)
+        idx.split.og <- createDataPartition(data.dbsmotesvm$y, p = tuning.ratio)$Resample1
         
         for (indicator in c(-1, 1)){ #2-fold cross validation
           ### 2.2 split the dataset into a training set and a tuning set.
-          data.dbsmotesvm.og.train <- data.dbsmotesvm[indicator*-idx.split.og$Resample1, ] # 1 - tuning ratio
-          data.dbsmotesvm.og.tune  <- data.dbsmotesvm[indicator* idx.split.og$Resample1, ] # tuning ratio
+          data.dbsmotesvm.og.train <- data.dbsmotesvm[-1 * indicator * idx.split.og, ] # 1 - tuning ratio
+          data.dbsmotesvm.og.tune  <- data.dbsmotesvm[ 1 * indicator * idx.split.og, ] # tuning ratio
           
           ### 2.2. Oversample positive samples using SMOTE, and split into training and tuning set
           ### first do SMOTE to the positive samples as much as possible, and randomly select samples of designated size.
