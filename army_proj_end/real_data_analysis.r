@@ -14,8 +14,10 @@ source("data_generator.R")
 source("bayes_rule.R")
 source("zsvm.R")
 source("simplifier.R")
-trial.number = 11
-
+trial.number = 12
+replication <- 100
+imbalance.ratio = 30
+imbalance.ratios = c(30)
 start_time <- Sys.time() 
 
 
@@ -64,10 +66,6 @@ colnames(l2.distances.pos) <- rownames(army.predictors)
 set.seed(2022)
 kmeans_3 <- kmeans(army.predictors.for.distance,4)$cluster
 
-#3d plot
-p <- plot_ly(army.predictors.for.distance,x = army.predictors.for.distance$RH, y = army.predictors.for.distance$TEMP, z = army.predictors.for.distance$WIND_SPEED,
-             color = kmeans_3)
-p
 
 for (army.num in rownames(army.predictors.for.distance)){
 		army.vector <- unlist(army.predictors.for.distance[army.num, ])
@@ -98,9 +96,6 @@ new.positive.instances <- national.pos[c(new.positive.indices.group1, new.positi
 colors = c(rep(1,8), rep(2,8), rep(3,8), rep(4,8), kmeans_3)
 positive.combined <- rbind(new.positive.instances, army)
 
-p <- plot_ly(positive.combined,x = positive.combined$RH, y = positive.combined$TEMP, z = positive.combined$WIND_SPEED,
-             color = colors)
-p
 
 head(army)
 head(national)
@@ -148,10 +143,9 @@ l2.distances.neg.mean <- sort(l2.distances.neg.mean, decreasing = TRUE)
 
 
 # 1.1. simulation parameters
-replication <- 100
 kfoldtimes <- 2
-n.method <- 10
-use.method <- list("gswsvm3"= 1, "gswsvm" = 0, "svm" = 0, "svmdc" = 0, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0, "smotedc" = 1)
+n.method <- 8
+use.method <- list("gswsvm3"= 1, "svm" = 1, "svmdc" = 1, "clusterSVM" = 1, "smotesvm" = 1, "blsmotesvm"= 1, "dbsmotesvm" = 1 )
 
 tuning.ratio <- 1/2
 test.ratio <- 3/8
@@ -162,7 +156,6 @@ test.ratio <- 3/8
 
 
 #imbalance.ratios <-  seq(60, 90, 10)
-imbalance.ratios <-c(30)
 
 # saving matrices
 imbal.gme <- matrix(NA, nrow = length(imbalance.ratios), ncol = n.method)
@@ -181,7 +174,6 @@ imbal.sen.sd <- imbal.gme
 imbal.acc.sd <- imbal.gme
 imbal.pre.sd <- imbal.gme
 
-imbalance.ratio = 30
   cat("imbalance.ratio :",imbalance.ratio, "\n")
   
   n.negative <- imbalance.ratio * 38
@@ -197,6 +189,9 @@ imbalance.ratio = 30
   data.full$DMG <- factor(data.full$DMG, levels = c(0, 1))
   levels(data.full$DMG)<- c("neg", "pos")
   names(data.full)[5] <- "y"### 1.2.1. data generation imbalance ratio
+  
+  
+  
   n.samples <- dim(data.full)[1]
   
   pi.pos <- 1 / (1 + imbalance.ratio) # probability of a positive sample being generated
@@ -265,9 +260,9 @@ imbalance.ratio = 30
     ## 2.1. Prepare a dataset
     
     ### 2.1.2. split the dataset into training set and testing set by 8:2 strafitied sampling
-    idx.split.test <- createDataPartition(data.full$y, p = test.ratio)
-    data.train <- data.full[ -idx.split.test$Resample1, ] # 1 - test.ratio
-    data.test  <- data.full[  idx.split.test$Resample1, ] # test.ratio
+    idx.split.test <- createDataPartition(data.full$y, p = test.ratio)$Resample1
+    data.train <- data.full[ -1 * idx.split.test, ] # 1 - test.ratio
+    data.test  <- data.full[  1 * idx.split.test, ] # test.ratio
     
    
    
@@ -280,6 +275,7 @@ imbalance.ratio = 30
     
     if (use.method$"gswsvm3"){ #use this method or NOT
       n.model <- 1
+      print("gswsvm3")
       set.seed(rep) # for reproducible result
       
       ## 1. copy the training dataset so that the oversampling here doesn't make the dataset for other methods.
@@ -390,7 +386,7 @@ imbalance.ratio = 30
     if (use.method$"svm"){ #use this method or NOT
       n.model <- 2
       set.seed(rep)
-      
+      print("svm")
       # 2.1. split the training data into training and tuning set by 3:1 stratified sampling
       data.svm <- data.train 
       tuning.criterion.values.svm <- create.tuning.criterion.storage(list("c" = param.set.c, "gamma" = param.set.gamma))
@@ -412,16 +408,16 @@ imbalance.ratio = 30
           gamma.now <- param.set.gamma[j]
           
           model.now <- svm(y ~ ., gamma = gamma.now, cost = c.now, kernel="radial", scale = FALSE, data = data.svm.train)
-          
-          y.pred.now <- predict(model.now, data.svm.tune[1:2]) #f(x_i) value
+          model.now
+          y.pred.now <- predict(model.now, data.svm.tune[-which( colnames(data.svm.tune) == "y") ]) #f(x_i) value
           cmat <- t(table(y.pred.now, data.svm.tune$y))
           sen <- cmat[2,2]/sum(cmat[2,])
           spe <- cmat[1,1]/sum(cmat[1,])
           gme <- sqrt(sen*spe)
           
           
-          tuning.criterion.values.svm[row.idx.now, 1:2] <- tuning.criterion.values.svm[row.idx.now, 1:2] + c(c.now, gamma.now)
-          tuning.criterion.values.svm[row.idx.now, 3] <- tuning.criterion.values.svm[row.idx.now, 3] + gme
+          tuning.criterion.values.svm[row.idx.now, c("c", "gamma")] <- c(c.now, gamma.now)
+          tuning.criterion.values.svm[row.idx.now, "criterion"] <- tuning.criterion.values.svm[row.idx.now, 3] + gme
         }} #end for two for loops
         }}
       
@@ -432,8 +428,9 @@ imbalance.ratio = 30
       
       #fit and evalutate performance on the test set
       svm.model <- svm(y~., data = data.svm.train, kernel="radial", gamma=param.svm.gamma, cost=param.svm.c)
-      
-      svm.pred <- predict(svm.model, data.test[1:2])
+      svm.pred <- predict(
+        svm.model, data.test[ -which( colnames(data.test) == "y")]
+        )
       
       svm.cmat=t(table(svm.pred, data.test$y))
       svm.cmat
@@ -454,6 +451,8 @@ imbalance.ratio = 30
     # in Proc. Int. Joint Conf. Artif. Intell.,Stockholm, Sweden, 1999, pp. 55–60.
     if (use.method$"svmdc"){ #use this method or NOT
       n.model <- 3
+      print("svmdc")
+      
       set.seed(rep)
       
       ## 1. copy the training dataset so that the oversampling here doesn't make the dataset for other methods
@@ -496,7 +495,7 @@ imbalance.ratio = 30
           spe <- cmat[1,1] / sum(cmat[1,])
           gme <- sqrt(sen*spe)
           
-          tuning.criterion.values.svmdc[row.idx.now, c("c", "gamma")] <- tuning.criterion.values.svmdc[row.idx.now, c("c", "gamma")] + c(c.now, gamma.now)
+          tuning.criterion.values.svmdc[row.idx.now, c("c", "gamma")] <-  c(c.now, gamma.now)
           tuning.criterion.values.svmdc[row.idx.now, "criterion"] <- tuning.criterion.values.svmdc[row.idx.now, "criterion"] + gme
         }} #end for two for loops
         }} 
@@ -526,8 +525,12 @@ imbalance.ratio = 30
     # Journal of Machine Learning Research, 2013, 31, 307-315.
     
     if (use.method$"clusterSVM"){ #use this method or NOT
+      print("cluster")
+      
       n.model <- 4
       set.seed(rep)
+      
+      data.clustersvm <- data.train 
       
       # 4.1. The number of cluster should be provided: we use the result of GMC model learned.
       param.clusterSVM.k <- gmc.model.pos$G
@@ -538,12 +541,16 @@ imbalance.ratio = 30
       tuning.criterion.values.clusterSVM <- create.tuning.criterion.storage(list("c" = param.set.c, "lambda" = param.set.clusteSVM.lambda))
       
       for (time in 1:kfoldtimes){ #5-times
-        idx.split.og <- createDataPartition(data.svmdc$y, p = tuning.ratio)
+        idx.split.og <- createDataPartition(data.clustersvm$y, p = tuning.ratio)$Resample1
         
         for (indicator in c(-1, 1)){ #2-fold cross validation
+          data.clustersvm.train <- data.clustersvm[-1 * indicator * idx.split.og, ] # 1 - tuning ratio
+          data.clustersvm.tune  <- data.clustersvm[ 1 * indicator * idx.split.og, ] # tuning ratio
           
-          data.svmdc.train <- data.svmdc[indicator*-idx.split.og$Resample1, ] # 1 - tuning ratio
-          data.svmdc.tune  <- data.svmdc[indicator* idx.split.og$Resample1, ] # tuning ratio
+          # scaling and centering of the data
+          preProcValues <-preProcess(data.clustersvm.train[,-5], method =c("center", "scale"))
+          data.clustersvm.train[,1:4] <- predict(preProcValues, data.clustersvm.train[,-5])
+          data.clustersvm.tune[, 1:4] <- predict(preProcValues, data.clustersvm.tune[,-5]) #scale w.r.t mean and sd of training dataset
           
       for (i in 1:length(param.set.c)){ #loop over gamma 
         for (j in 1:length(param.set.clusteSVM.lambda)){ #loop over c
@@ -552,16 +559,23 @@ imbalance.ratio = 30
           c.now <- param.set.c[i]
           lambda.now <- param.set.clusteSVM.lambda[j]
           
-          model.now <- clusterSVM(x = data.svmdc.train[-which(colnames(data.svmdc.train) == "y")], y = data.svmdc.train$y, lambda = lambda.now, cost = c.now, centers = param.clusterSVM.k, seed = 512, verbose = 0) 
+          model.now <- clusterSVM(x = data.clustersvm.train[-which(colnames(data.clustersvm.train) == "y")],
+                                  y = data.clustersvm.train$y,
+                                  lambda = lambda.now,
+                                  cost = c.now,
+                                  centers = param.clusterSVM.k,
+                                  seed = 512,
+                                  verbose = 0
+                                  )
           
-          y.pred.now = predict(model.now, data.svmdc.tune[-which(colnames(data.svmdc.tune) == "y")])$predictions
-          cmat <- table(truth = data.svmdc.tune$y, pred = y.pred.now)
+          y.pred.now = predict(model.now, data.clustersvm.tune[-which(colnames(data.clustersvm.tune) == "y")])$predictions
+          cmat <- table(truth = data.clustersvm.tune$y, pred = y.pred.now)
           sen <- cmat[2,2]/sum(cmat[2,])
           spe <- cmat[1,1]/sum(cmat[1,])
           gme <- sqrt(sen*spe)
           
-          tuning.criterion.values.clusterSVM[row.idx.now, 1:2] <- tuning.criterion.values.clusterSVM[row.idx.now, 1:2] + c(c.now, lambda.now)
-          tuning.criterion.values.clusterSVM[row.idx.now, 3] <- tuning.criterion.values.clusterSVM[row.idx.now, 3] + gme
+          tuning.criterion.values.clusterSVM[row.idx.now, c("c", "lambda")] <-  c(c.now, lambda.now)
+          tuning.criterion.values.clusterSVM[row.idx.now, "criterion"] <- tuning.criterion.values.clusterSVM[row.idx.now, "criterion"] + gme
         }} #end for two for loops
         }}
       
@@ -570,9 +584,14 @@ imbalance.ratio = 30
       param.clusterSVM.c <- tuning.criterion.values.clusterSVM[1,1]
       param.clusterSVM.lambda <- tuning.criterion.values.clusterSVM[1,2]
       
+      preProcValues <-preProcess(data.clustersvm[,-5], method =c("center", "scale"))
+      data.clustersvm[-5] <- predict(preProcValues, data.clustersvm[,-5])
+      data.test.clustersvm <- data.test
+      data.test.clustersvm[-5] <- predict(preProcValues, data.test.clustersvm[,-5])
+      
       #fit and evaluate performance on the test set
-      clusterSVM.model <- clusterSVM(x = data.svmdc.train[-which(colnames(data.svmdc.train) == "y")], y = data.svmdc.train$y, lambda = param.clusterSVM.lambda, cost = param.clusterSVM.c, centers = param.clusterSVM.k, seed = 512, verbose = 0) 
-      clusterSVM.pred = predict(clusterSVM.model, data.test[-which(colnames(data.test) == "y")])$predictions
+      clusterSVM.model <- clusterSVM(x = data.clustersvm.train[-which(colnames(data.clustersvm.train) == "y")], y = data.clustersvm.train$y, lambda = param.clusterSVM.lambda, cost = param.clusterSVM.c, centers = param.clusterSVM.k, seed = 512, verbose = 0) 
+      clusterSVM.pred = predict(clusterSVM.model, data.test.clustersvm[-which(colnames(data.test.clustersvm) == "y")])$predictions
       
       svm.cmat=t(table(clusterSVM.pred, data.test$y))
       svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
@@ -601,6 +620,7 @@ imbalance.ratio = 30
     if (use.method$"smotesvm"){ #use this method or NOT, for flexible comparison
       n.model <- 5
       set.seed(rep) # for reproducible result    
+      print("smotesvm")
       
       ## 1. copy the training dataset so that the oversampling here doesn't make the dataset for other methods
       data.smotesvm <- data.train 
@@ -673,7 +693,7 @@ imbalance.ratio = 30
           spe <- cmat[1,1] / sum(cmat[1,])
           gme <- sqrt(sen*spe)
           
-          tuning.criterion.values.smotesvm[row.idx.now, c("c", "gamma")] <- tuning.criterion.values.smotesvm[row.idx.now, c("c", "gamma")] + c(c.now, gamma.now)
+          tuning.criterion.values.smotesvm[row.idx.now, c("c", "gamma")] <- c(c.now, gamma.now)
           tuning.criterion.values.smotesvm[row.idx.now, "criterion"] <- tuning.criterion.values.smotesvm[row.idx.now, "criterion"] + gme
         }} #end for two for loops
         }} # 5-fold, 2 times
@@ -740,6 +760,8 @@ imbalance.ratio = 30
     
     if (use.method$"blsmotesvm"){ #use this method or NOT, for flexible comparison
       n.model <- 6
+      print("blsmotesvm")
+      
       set.seed(rep) # for reproducible result    
       
       ## 1. copy the training dataset so that the oversampling here doesn't make the dataset for other methods
@@ -814,7 +836,7 @@ imbalance.ratio = 30
               spe <- cmat[1,1] / sum(cmat[1,])
               gme <- sqrt(sen*spe)
               
-              tuning.criterion.values.blsmotesvm[row.idx.now, c("c", "gamma")] <- tuning.criterion.values.blsmotesvm[row.idx.now, c("c", "gamma")] + c(c.now, gamma.now)
+              tuning.criterion.values.blsmotesvm[row.idx.now, c("c", "gamma")] <-  c(c.now, gamma.now)
               tuning.criterion.values.blsmotesvm[row.idx.now, "criterion"] <- tuning.criterion.values.blsmotesvm[row.idx.now, "criterion"] + gme
             }} #end for two for loops
         }} # 5-fold, 2 times
@@ -884,6 +906,7 @@ imbalance.ratio = 30
     if (use.method$"dbsmotesvm"){ #use this method or NOT, for flexible comparison
       n.model <- 7
       set.seed(rep) # for reproducible result    
+      print("dbsmotesvm")
       
       ## 1. copy the training dataset so that the oversampling here doesn't make the dataset for other methods
       data.dbsmotesvm <- data.train 
@@ -956,7 +979,7 @@ imbalance.ratio = 30
               spe <- cmat[1,1] / sum(cmat[1,])
               gme <- sqrt(sen*spe)
               
-              tuning.criterion.values.dbsmotesvm[row.idx.now, c("c", "gamma")] <- tuning.criterion.values.dbsmotesvm[row.idx.now, c("c", "gamma")] + c(c.now, gamma.now)
+              tuning.criterion.values.dbsmotesvm[row.idx.now, c("c", "gamma")] <-  c(c.now, gamma.now)
               tuning.criterion.values.dbsmotesvm[row.idx.now, "criterion"] <- tuning.criterion.values.dbsmotesvm[row.idx.now, "criterion"] + gme
             }} #end for two for loops
         }} # 5-fold, 2 times
@@ -1016,28 +1039,6 @@ imbalance.ratio = 30
   } #replication
   
   
-  p <- plot_ly(
-    smote.samples.selected,
-    x = smote.samples.selected$RH, 
-    y = smote.samples.selected$TEMP, 
-    z = smote.samples.selected$WIND_SPEED
-    
-  )
-  
-  p
-  
-  smote.samples.gmc <- data.gmc$"data.gmc.train"
-  p2 <- plot_ly(
-    smote.samples.gmc,
-    x = smote.samples.gmc$RH, 
-    y = smote.samples.gmc$TEMP, 
-    z = smote.samples.gmc$WIND_SPEED
-    
-  )
-  
-  p2
-  
-  data.gmc
   # save all replications
   write.csv(svm.gme, paste0(direc, "/gme_result", imbalance.ratio, ".csv"))
   write.csv(svm.spe, paste0(direc, "/spe_result", imbalance.ratio, ".csv"))
@@ -1078,7 +1079,6 @@ imbalance.ratio = 30
   print(end_time - start_time)
   
   sink(file = NULL)
-} #imbalance ratio trials
 
 write.csv(imbal.gme, paste0(direc, "/imbal_gme_result.csv"))
 write.csv(imbal.spe, paste0(direc, "/imbal_spe_result.csv"))
