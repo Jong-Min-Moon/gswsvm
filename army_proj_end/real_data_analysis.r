@@ -15,7 +15,7 @@ source("bayes_rule.R")
 source("zsvm.R")
 source("simplifier.R")
 trial.number = 12
-replication <- 100
+replication <- 3
 imbalance.ratio = 30
 imbalance.ratios = c(30)
 start_time <- Sys.time() 
@@ -405,7 +405,7 @@ imbal.pre.sd <- imbal.gme
      
       for (i in 1:length(param.set.c)){ #loop over gamma 
         for (j in 1:length(param.set.gamma)){ #loop over c
-          row.idx.now <- (i-1) * length(param.set.c) + j
+          row.idx.now <- (i-1) * length(param.set.gamma) + j
           
           c.now <- param.set.c[i]
           gamma.now <- param.set.gamma[j]
@@ -491,7 +491,7 @@ imbal.pre.sd <- imbal.gme
     
       for (i in 1:length(param.set.c)){ #loop over c
         for (j in 1:length(param.set.gamma)){ #loop over gamma
-          row.idx.now <- (i-1) * length(param.set.c) + j #set row index
+          row.idx.now <- (i-1) * length(param.set.gamma) + j #set row index
           
           c.now <- param.set.c[i]
           gamma.now <- param.set.gamma[j]
@@ -519,6 +519,9 @@ imbal.pre.sd <- imbal.gme
       preProcValues <-preProcess(data.svmdc[-5], method =c("center", "scale"))
       data.svmdc <- predict(preProcValues, data.svmdc)
       data.svmdc.test <- predict(preProcValues, data.test)
+      
+      # weight vector
+      weight.svmdc<- imbalance.ratio * (data.svmdc$y == 'pos') + 1 * (data.svmdc$y == 'neg')
       
       # 3. with the best hyperparameter, fit the svm
       svmdc.model <- wsvm(data = data.svmdc, y ~ ., weight = weight.svmdc, gamma = param.best.svmdc$"gamma", cost = param.best.svmdc$"c", kernel="radial", scale = FALSE)
@@ -567,9 +570,10 @@ imbal.pre.sd <- imbal.gme
           data.clustersvm.train <- predict(preProcValues, data.clustersvm.train)
           data.clustersvm.tune <- predict(preProcValues, data.clustersvm.tune) #scale w.r.t mean and sd of training dataset
           
-      for (i in 1:length(param.set.c)){ #loop over gamma 
-        for (j in 1:length(param.set.clusteSVM.lambda)){ #loop over c
-          row.idx.now <- (i-1) * length(param.set.c) + j
+      for (i in 1:length(param.set.c)){ #loop over c 
+        for (j in 1:length(param.set.clusteSVM.lambda)){ #loop over lambda
+          row.idx.now <- (i-1) * length(param.set.clusteSVM.lambda) + j
+          
           
           c.now <- param.set.c[i]
           lambda.now <- param.set.clusteSVM.lambda[j]
@@ -589,8 +593,9 @@ imbal.pre.sd <- imbal.gme
           spe <- cmat[1,1]/sum(cmat[1,])
           gme <- sqrt(sen*spe)
           
-          tuning.criterion.values.clusterSVM[row.idx.now, c("c", "lambda")] <-  c(c.now, lambda.now)
-          tuning.criterion.values.clusterSVM[row.idx.now, "criterion"] <- tuning.criterion.values.clusterSVM[row.idx.now, "criterion"] + gme
+          tuning.criterion.values.clusterSVM[row.idx.now, 1] <-  c.now
+          tuning.criterion.values.clusterSVM[row.idx.now, 2] <-  lambda.now
+          tuning.criterion.values.clusterSVM[row.idx.now, 3] <- tuning.criterion.values.clusterSVM[row.idx.now, "criterion"] + gme
         }} #end for two for loops
         }}
       
@@ -699,7 +704,7 @@ imbal.pre.sd <- imbal.gme
     
       for (i in 1:length(param.set.c)){ #loop over c
         for (j in 1:length(param.set.gamma)){ #loop over gamma
-          row.idx.now <- (i-1) * length(param.set.c) + j #set row index
+          row.idx.now <- (i-1) * length(param.set.gamma) + j #set row index
           
           c.now <- param.set.c[i]
           gamma.now <- param.set.gamma[j]
@@ -851,7 +856,7 @@ imbal.pre.sd <- imbal.gme
           
           for (i in 1:length(param.set.c)){ #loop over c
             for (j in 1:length(param.set.gamma)){ #loop over gamma
-              row.idx.now <- (i-1) * length(param.set.c) + j #set row index
+              row.idx.now <- (i-1) * length(param.set.gamma) + j #set row index
               
               c.now <- param.set.c[i]
               gamma.now <- param.set.gamma[j]
@@ -1003,7 +1008,7 @@ imbal.pre.sd <- imbal.gme
           
           for (i in 1:length(param.set.c)){ #loop over c
             for (j in 1:length(param.set.gamma)){ #loop over gamma
-              row.idx.now <- (i-1) * length(param.set.c) + j #set row index
+              row.idx.now <- (i-1) * length(param.set.gamma) + j #set row index
               
               c.now <- param.set.c[i]
               gamma.now <- param.set.gamma[j]
@@ -1134,5 +1139,3 @@ write.csv(imbal.spe.sd, paste0(direc, "/imbal_spe_sd_result.csv"))
 write.csv(imbal.sen.sd, paste0(direc, "/imbal_sen_sd_result.csv"))
 write.csv(imbal.acc.sd, paste0(direc, "/imbal_acc_sd_result.csv"))
 write.csv(imbal.pre.sd, paste0(direc, "/imbal_pre_sd_result.csv"))
-
-  

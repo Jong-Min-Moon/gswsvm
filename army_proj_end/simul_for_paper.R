@@ -258,7 +258,7 @@ tuning.criterion.values.svm <- create.tuning.criterion.storage(list("c" = param.
 
 for (i in 1:length(param.set.c)){ #loop over gamma 
   for (j in 1:length(param.set.gamma)){ #loop over c
-    row.idx.now <- (i-1) * length(param.set.c) + j
+    row.idx.now <- (i-1) * length(param.set.gamma) + j
 
     c.now <- param.set.c[i]
     gamma.now <- param.set.gamma[j]
@@ -328,7 +328,7 @@ weight.svmdc <- imbalance.ratio * (data.svmdc.train$y == 'pos') + 1 * (data.svmd
 ### 2.4. loop over c and gamma
 for (i in 1:length(param.set.c)){ #loop over c
   for (j in 1:length(param.set.gamma)){ #loop over gamma
-    row.idx.now <- (i-1) * length(param.set.c) + j #set row index
+    row.idx.now <- (i-1) * length(param.set.gamma) + j #set row index
           
     c.now <- param.set.c[i]
     gamma.now <- param.set.gamma[j]
@@ -384,7 +384,8 @@ tuning.criterion.values.clusterSVM <- create.tuning.criterion.storage(list("c" =
 
 for (i in 1:length(param.set.c)){ #loop over gamma 
   for (j in 1:length(param.set.clusteSVM.lambda)){ #loop over c
-    row.idx.now <- (i-1) * length(param.set.c) + j
+    row.idx.now <- (i-1) * length(param.set.clusteSVM.lambda) + j
+    
     
     c.now <- param.set.c[i]
     lambda.now <- param.set.clusteSVM.lambda[j]
@@ -490,7 +491,7 @@ if (use.method$"smotesvm"){ #use this method or NOT, for flexible comparison
   ### 2.4. loop over c and gamma
   for (i in 1:length(param.set.c)){ #loop over c
     for (j in 1:length(param.set.gamma)){ #loop over gamma
-      row.idx.now <- (i-1) * length(param.set.c) + j #set row index
+      row.idx.now <- (i-1) * length(param.set.gamma) + j #set row index
       
       c.now <- param.set.c[i]
       gamma.now <- param.set.gamma[j]
@@ -588,7 +589,7 @@ if (use.method$"blsmotesvm"){ #use this method or NOT, for flexible comparison
   ### 2.4. loop over c and gamma
   for (i in 1:length(param.set.c)){ #loop over c
     for (j in 1:length(param.set.gamma)){ #loop over gamma
-      row.idx.now <- (i-1) * length(param.set.c) + j #set row index
+      row.idx.now <- (i-1) * length(param.set.gamma) + j #set row index
       
       c.now <- param.set.c[i]
       gamma.now <- param.set.gamma[j]
@@ -693,7 +694,7 @@ if (use.method$"dbsmotesvm"){ #use this method or NOT, for flexible comparison
   ### 2.4. loop over c and gamma
   for (i in 1:length(param.set.c)){ #loop over c
     for (j in 1:length(param.set.gamma)){ #loop over gamma
-      row.idx.now <- (i-1) * length(param.set.c) + j #set row index
+      row.idx.now <- (i-1) * length(param.set.gamma) + j #set row index
       
       c.now <- param.set.c[i]
       gamma.now <- param.set.gamma[j]
