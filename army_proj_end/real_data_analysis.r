@@ -429,14 +429,18 @@ imbal.pre.sd <- imbal.gme
       param.svm.c <- tuning.criterion.values.svm[1,1]
       param.svm.gamma <- tuning.criterion.values.svm[1,2]
       
+      # centering and scaling
+      preProcValues <-preProcess(data.svm[-5], method =c("center", "scale"))
+      data.svm <- predict(preProcValues, data.svm)
+      data.svm.test <- predict(preProcValues, data.test)
+      
       #fit and evalutate performance on the test set
-      svm.model <- svm(y~., data = data.svm.train, kernel="radial", gamma=param.svm.gamma, cost=param.svm.c)
+      svm.model <- svm(y~., data = data.svm, kernel="radial", gamma=param.svm.gamma, cost=param.svm.c)
       svm.pred <- predict(
-        svm.model, data.test[ -which( colnames(data.test) == "y")]
+        svm.model, data.svm.test[ -which( colnames(data.svm.test) == "y")]
         )
       
-      svm.cmat=t(table(svm.pred, data.test$y))
-      svm.cmat
+      svm.cmat <- table("truth" = data.svm.test$y, "pred" = svm.pred)
       svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
       svm.sen[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
       svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
@@ -511,11 +515,16 @@ imbal.pre.sd <- imbal.gme
       tuning.criterion.values.svmdc <- tuning.criterion.values.svmdc[idx.sorting, ]
       param.best.svmdc <- tuning.criterion.values.svmdc[1,]
       
-      # 3. with the best hyperparameter, fit the svm
-      svmdc.model <- wsvm(data = data.svmdc.train, y ~ ., weight = weight.svmdc, gamma = param.best.svmdc$"gamma", cost = param.best.svmdc$"c", kernel="radial", scale = FALSE)
-      svmdc.pred  <- predict(svmdc.model, data.test[ -which(colnames(data.test) == "y") ])
+      # centering and scaling
+      preProcValues <-preProcess(data.svmdc[-5], method =c("center", "scale"))
+      data.svmdc <- predict(preProcValues, data.svmdc)
+      data.svmdc.test <- predict(preProcValues, data.test)
       
-      svm.cmat <- table("truth" = data.test$y, "pred" = svmdc.pred)
+      # 3. with the best hyperparameter, fit the svm
+      svmdc.model <- wsvm(data = data.svmdc, y ~ ., weight = weight.svmdc, gamma = param.best.svmdc$"gamma", cost = param.best.svmdc$"c", kernel="radial", scale = FALSE)
+      svmdc.pred  <- predict(svmdc.model, data.svmdc.test[ -which(colnames(data.svmdc.test) == "y") ])
+      
+      svm.cmat <- table("truth" = data.svmdc.test$y, "pred" = svmdc.pred)
       svm.acc[rep,n.model] <-(svm.cmat[1,1] + svm.cmat[2,2]) / sum(svm.cmat)
       svm.sen[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[2,]) # same as the recall
       svm.pre[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[,2])
@@ -590,16 +599,16 @@ imbal.pre.sd <- imbal.gme
       param.clusterSVM.c <- tuning.criterion.values.clusterSVM[1,1]
       param.clusterSVM.lambda <- tuning.criterion.values.clusterSVM[1,2]
       
+      # centering and scaling
       preProcValues <-preProcess(data.clustersvm[,-5], method =c("center", "scale"))
-      data.clustersvm[-5] <- predict(preProcValues, data.clustersvm[,-5])
-      data.test.clustersvm <- data.test
-      data.test.clustersvm[-5] <- predict(preProcValues, data.test.clustersvm[,-5])
+      data.clustersvm <- predict(preProcValues, data.clustersvm)
+      data.test.clustersvm <- predict(preProcValues, data.test)
       
-      #fit and evaluate performance on the test set
-      clusterSVM.model <- clusterSVM(x = data.clustersvm.train[-which(colnames(data.clustersvm.train) == "y")], y = data.clustersvm.train$y, lambda = param.clusterSVM.lambda, cost = param.clusterSVM.c, centers = param.clusterSVM.k, seed = 512, verbose = 0) 
+      #fit the final model and evaluate performance on the test set
+      clusterSVM.model <- clusterSVM(x = data.clustersvm[-which(colnames(data.clustersvm) == "y")], y = data.clustersvm.train$y, lambda = param.clusterSVM.lambda, cost = param.clusterSVM.c, centers = param.clusterSVM.k, seed = 512, verbose = 0) 
       clusterSVM.pred = predict(clusterSVM.model, data.test.clustersvm[-which(colnames(data.test.clustersvm) == "y")])$predictions
       
-      svm.cmat=t(table(clusterSVM.pred, data.test$y))
+      svm.cmat=(table("truth" = data.test.clustersvm$y, "pred" = clusterSVM.pred))
       svm.acc[rep,n.model]=(svm.cmat[1,1]+svm.cmat[2,2])/sum(svm.cmat)
       svm.sen[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[2,]) # same as the recall
       svm.pre[rep,n.model]=svm.cmat[2,2]/sum(svm.cmat[,2])
@@ -714,6 +723,11 @@ imbal.pre.sd <- imbal.gme
       tuning.criterion.values.smotesvm <- tuning.criterion.values.smotesvm[idx.sorting, ]
       param.best.smotesvm <- tuning.criterion.values.smotesvm[1,]
       
+      # centering and scaling
+      preProcValues <-preProcess(data.smotesvm[,-5], method =c("center", "scale"))
+      data.smotesvm <- predict(preProcValues, data.smotesvm)
+      data.test.smotesvm <- predict(preProcValues, data.test)
+      
       # do the smote.
       data.smotesvm.og.train <- data.smotesvm #to reuse the code in the tuning procedure
       
@@ -752,9 +766,9 @@ imbal.pre.sd <- imbal.gme
       
       # 3. with the best hyperparameter, fit the svm
       smotesvm.model <- svm(data = data.smotesvm.train, y ~ ., gamma = param.best.smotesvm$"gamma", cost = param.best.smotesvm$"c", kernel="radial", scale = FALSE)
-      smotesvm.pred  <- predict(smotesvm.model, data.test[ -which(colnames(data.test) == "y") ])
+      smotesvm.pred  <- predict(smotesvm.model, data.test.smotesvm[ -which(colnames(data.test.smotesvm) == "y") ])
       
-      svm.cmat <- table("truth" = data.test$y, "pred" = smotesvm.pred)
+      svm.cmat <- table("truth" = data.test.smotesvm$y, "pred" = smotesvm.pred)
       svm.acc[rep,n.model] <-(svm.cmat[1,1] + svm.cmat[2,2]) / sum(svm.cmat)
       svm.sen[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[2,]) # same as the recall
       svm.pre[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[,2])
@@ -861,6 +875,11 @@ imbal.pre.sd <- imbal.gme
       tuning.criterion.values.blsmotesvm <- tuning.criterion.values.blsmotesvm[idx.sorting, ]
       param.best.blsmotesvm <- tuning.criterion.values.blsmotesvm[1,]
       
+      # centering and scaling
+      preProcValues <-preProcess(data.blsmotesvm[,-5], method =c("center", "scale"))
+      data.blsmotesvm <- predict(preProcValues, data.blsmotesvm)
+      data.test.blsmotesvm <- predict(preProcValues, data.test)
+      
       # do the smote.
       data.blsmotesvm.og.train <- data.blsmotesvm #to reuse the code in the tuning procedure
       
@@ -900,9 +919,9 @@ imbal.pre.sd <- imbal.gme
       
       # 3. with the best hyperparameter, fit the svm
       blsmotesvm.model <- svm(data = data.blsmotesvm.train, y ~ ., gamma = param.best.blsmotesvm$"gamma", cost = param.best.blsmotesvm$"c", kernel="radial", scale = FALSE)
-      blsmotesvm.pred  <- predict(blsmotesvm.model, data.test[ -which(colnames(data.test) == "y") ])
+      blsmotesvm.pred  <- predict(blsmotesvm.model, data.test.blsmotesvm[ -which(colnames(data.test.blsmotesvm) == "y") ])
       
-      svm.cmat <- table("truth" = data.test$y, "pred" = blsmotesvm.pred)
+      svm.cmat <- table("truth" = data.test.blsmotesvm$y, "pred" = blsmotesvm.pred)
       svm.acc[rep,n.model] <-(svm.cmat[1,1] + svm.cmat[2,2]) / sum(svm.cmat)
       svm.sen[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[2,]) # same as the recall
       svm.pre[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[,2])
@@ -1008,6 +1027,11 @@ imbal.pre.sd <- imbal.gme
       tuning.criterion.values.dbsmotesvm <- tuning.criterion.values.dbsmotesvm[idx.sorting, ]
       param.best.dbsmotesvm <- tuning.criterion.values.dbsmotesvm[1,]
       
+      # centering and scaling
+      preProcValues <-preProcess(data.dbsmotesvm[,-5], method =c("center", "scale"))
+      data.dbsmotesvm <- predict(preProcValues, data.dbsmotesvm)
+      data.test.dbsmotesvm <- predict(preProcValues, data.test)
+      
       # do the smote.
       data.dbsmotesvm.og.train <- data.dbsmotesvm #to reuse the code in the tuning procedure
       
@@ -1046,9 +1070,9 @@ imbal.pre.sd <- imbal.gme
       
       # 3. with the best hyperparameter, fit the svm
       dbsmotesvm.model <- svm(data = data.dbsmotesvm.train, y ~ ., gamma = param.best.dbsmotesvm$"gamma", cost = param.best.dbsmotesvm$"c", kernel="radial", scale = FALSE)
-      dbsmotesvm.pred  <- predict(dbsmotesvm.model, data.test[ -which(colnames(data.test) == "y") ])
+      dbsmotesvm.pred  <- predict(dbsmotesvm.model, data.test.dbsmotesvm[ -which(colnames(data.test) == "y") ])
       
-      svm.cmat <- table("truth" = data.test$y, "pred" = dbsmotesvm.pred)
+      svm.cmat <- table("truth" = data.test.dbsmotesvm$y, "pred" = dbsmotesvm.pred)
       svm.acc[rep,n.model] <-(svm.cmat[1,1] + svm.cmat[2,2]) / sum(svm.cmat)
       svm.sen[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[2,]) # same as the recall
       svm.pre[rep,n.model] <- svm.cmat[2,2] / sum(svm.cmat[,2])
