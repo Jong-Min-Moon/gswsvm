@@ -15,7 +15,7 @@ source("simplifier.R")
 #################################
 # Step 1. parameter setting
 ############))#####################
-trial.number <- 19
+trial.number <- 18
 direc <- paste0("/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/", trial.number)
 
 start_time <- Sys.time() 

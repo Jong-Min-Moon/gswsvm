@@ -15,7 +15,7 @@ source("bayes_rule.R")
 source("zsvm.R")
 source("simplifier.R")
 trial.number = 12
-replication <- 3
+replication <- 100
 imbalance.ratio = 30
 imbalance.ratios = c(30)
 start_time <- Sys.time() 
@@ -191,6 +191,10 @@ imbal.pre.sd <- imbal.gme
   names(data.full)[5] <- "y"### 1.2.1. data generation imbalance ratio
   
   
+  #plot for the paper
+  preProcValues <-preProcess(data.full[-5], method =c("center", "scale"))
+  data.full.plot<- predict(preProcValues, data.full)
+  plot(data.full.plot[,1:4], col = data.full.plot[,5])
   
   n.samples <- dim(data.full)[1]
   
@@ -387,6 +391,8 @@ imbal.pre.sd <- imbal.gme
       n.model <- 2
       set.seed(rep)
       print("svm")
+      
+      
       # 2.1. split the training data into training and tuning set by 3:1 stratified sampling
       data.svm <- data.train 
       tuning.criterion.values.svm <- create.tuning.criterion.storage(list("c" = param.set.c, "gamma" = param.set.gamma))
@@ -610,7 +616,7 @@ imbal.pre.sd <- imbal.gme
       data.test.clustersvm <- predict(preProcValues, data.test)
       
       #fit the final model and evaluate performance on the test set
-      clusterSVM.model <- clusterSVM(x = data.clustersvm[-which(colnames(data.clustersvm) == "y")], y = data.clustersvm.train$y, lambda = param.clusterSVM.lambda, cost = param.clusterSVM.c, centers = param.clusterSVM.k, seed = 512, verbose = 0) 
+      clusterSVM.model <- clusterSVM(x = data.clustersvm[-which(colnames(data.clustersvm) == "y")], y = data.clustersvm$y, lambda = param.clusterSVM.lambda, cost = param.clusterSVM.c, centers = param.clusterSVM.k, seed = 512, verbose = 0) 
       clusterSVM.pred = predict(clusterSVM.model, data.test.clustersvm[-which(colnames(data.test.clustersvm) == "y")])$predictions
       
       svm.cmat=(table("truth" = data.test.clustersvm$y, "pred" = clusterSVM.pred))
