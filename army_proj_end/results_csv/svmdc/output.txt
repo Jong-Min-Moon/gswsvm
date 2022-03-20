@@ -1,0 +1,101 @@
+
+> print("---------------------------------")
+[1] "---------------------------------"
+
+> print("imbalance ratio")
+[1] "imbalance ratio"
+
+> print(imbalance.ratio)
+[1] 30
+
+> print("gme")
+[1] "gme"
+
+> print(apply(svm.gme, 2, mean))
+[1] 0.8647184        NA        NA
+[4]        NA        NA        NA
+[7]        NA
+
+> print("sen")
+[1] "sen"
+
+> print(apply(svm.sen, 2, mean))
+[1] 0.8933333        NA        NA
+[4]        NA        NA        NA
+[7]        NA
+
+> print("spe")
+[1] "spe"
+
+> print(apply(svm.spe, 2, mean))
+[1] 0.8408533        NA        NA
+[4]        NA        NA        NA
+[7]        NA
+
+> print("sen sd")
+[1] "sen sd"
+
+> print(apply(svm.sen, 2, sd))
+[1] 0.0760117        NA        NA
+[4]        NA        NA        NA
+[7]        NA
+
+> end_time <- Sys.time()
+
+> ("time elapsed")
+[1] "time elapsed"
+
+> print(end_time - start_time)
+Time difference of 29.73886 mins
+
+> sink(file = NULL)
+
+> print("---------------------------------")
+[1] "---------------------------------"
+
+> print("imbalance ratio")
+[1] "imbalance ratio"
+
+> print(imbalance.ratio)
+[1] 30
+
+> print("gme")
+[1] "gme"
+
+> print(apply(svm.gme, 2, mean))
+[1] 0.8711364        NA        NA
+[4]        NA        NA        NA
+[7]        NA
+
+> print("sen")
+[1] "sen"
+
+> print(apply(svm.sen, 2, mean))
+[1] 0.912    NA    NA    NA    NA    NA
+[7]    NA
+
+> print("spe")
+[1] "spe"
+
+> print(apply(svm.spe, 2, mean))
+[1] 0.8357013        NA        NA
+[4]        NA        NA        NA
+[7]        NA
+
+> print("sen sd")
+[1] "sen sd"
+
+> print(apply(svm.sen, 2, sd))
+[1] 0.07921047         NA         NA
+[4]         NA         NA         NA
+[7]         NA
+
+> end_time <- Sys.time()
+
+> ("time elapsed")
+[1] "time elapsed"
+
+> print(end_time - start_time)
+Time difference of 10.1169 hours
+
+> sink(file = NULL)

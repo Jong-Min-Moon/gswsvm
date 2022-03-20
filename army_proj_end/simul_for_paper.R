@@ -15,7 +15,11 @@ source("simplifier.R")
 #################################
 # Step 1. parameter setting
 ############))#####################
-trial.number <- 19
+trial.number <- 23
+# larger variance. 2, 2.5 -> 2.5, 3
+# (23) higher oversample raito 300 -> 400 -> 500
+# og/ syn cost ratio 6 -> 10
+
 direc <- paste0("/Users/mac/Documents/GitHub/gswsvm/army_proj_end/results_csv/", trial.number)
 
 start_time <- Sys.time() 
@@ -23,7 +27,7 @@ start_time <- Sys.time()
 # 1.1. simulation parameters
 replication <- 100
 n.method <- 8
-use.method <- list("gswsvm3"= 1,  "svm" = 1, "svmdc" = 1, "clusterSVM" = 1, "smotesvm" = 1, "blsmotesvm"= 1, "dbsmotesvm" = 1)
+use.method <- list("gswsvm3"= 1,  "svm" = 0, "svmdc" = 1, "clusterSVM" = 0, "smotesvm" = 0, "blsmotesvm"= 0, "dbsmotesvm" = 0)
 
 tuning.ratio <- 1/4
 test.ratio <- 1/4
@@ -64,14 +68,14 @@ cat("imbalance.ratio :",imbalance.ratio, "\n")
 pi.pos <- 1 / (1 + imbalance.ratio) # probability of a positive sample being generated
 pi.neg <- 1 - pi.pos # probability of a negative sample being generated
 
-c.neg <- imbalance.ratio/2
+c.neg <- imbalance.ratio
 c.pos <- 1
 cost.ratio <- c.neg / c.pos
-cost.ratio.og.syn <- cost.ratio
+cost.ratio.og.syn <- imbalance.ratio1
 ### 1.2.2. sampling imbalance ratio(i.e. imbalance ratio after SMOTE)
 ### since the performance may vary w.r.t to this quantity,
 ### we treat this as s hyperparameter and
-imbalance.ratio.s <- imbalance.ratio / 3
+imbalance.ratio.s <- imbalance.ratio / 5
 
 
 pi.s.pos  <- 1 / (1 + imbalance.ratio.s)
@@ -109,7 +113,7 @@ p.mean4 <- c(3,0);
 p.mean5 <- c(-2,5);
 p.mean6 <- c(8,5);
 p.mus <- rbind(p.mean1, p.mean2, p.mean3, p.mean4, p.mean5, p.mean6)
-p.sigma <- matrix(c(2,0,0,2),2,2)
+p.sigma <- matrix(c(2.5,0,0,2.5),2,2)
 
 n.mean1 <- c(-7,-5)
 n.mean2 <- c(3,-5);
@@ -121,7 +125,7 @@ n.mean6 <- c(2,5);
 
 
 n.mus <- rbind(n.mean1,n.mean2,n.mean3,n.mean4, n.mean5, n.mean6)
-n.sigma <- matrix(c(2,0,0,2),2,2)
+n.sigma <- matrix(c(3.5,0,0,3.5),2,2)
 
 param.set.c = 2^(-5 : 5); 
 param.set.gamma = 2^(-5 : 5);
@@ -276,7 +280,9 @@ for (i in 1:length(param.set.c)){ #loop over gamma
     tuning.criterion.values.svm[row.idx.now, 3] <- gme
       }} #end for two for loops
 
-idx.sorting <- order(-tuning.criterion.values.svm$criterion, tuning.criterion.values.svm$c, tuning.criterion.values.svm$gamma)
+idx.sorting <- order(-tuning.criterion.values.svm$criterion,# the larger the g-mean, the better.
+                     tuning.criterion.values.svm$c,
+                     tuning.criterion.values.svm$gamma)
 tuning.criterion.values.svm <- tuning.criterion.values.svm[idx.sorting, ]
 param.svm.c <- tuning.criterion.values.svm[1,1]
 param.svm.gamma <- tuning.criterion.values.svm[1,2]
@@ -347,7 +353,9 @@ for (i in 1:length(param.set.c)){ #loop over c
 }} #end for two for loops
 
 #### 2.5. get the best parameters
-idx.sorting <- order(-tuning.criterion.values.svmdc$criterion, tuning.criterion.values.svmdc$c, tuning.criterion.values.svmdc$gamma)
+idx.sorting <- order(-tuning.criterion.values.svmdc$criterion, # the larger the g-mean, the better.
+                     tuning.criterion.values.svmdc$c,
+                     tuning.criterion.values.svmdc$gamma)
 tuning.criterion.values.svmdc <- tuning.criterion.values.svmdc[idx.sorting, ]
 param.best.svmdc <- tuning.criterion.values.svmdc[1,]
 
@@ -402,7 +410,9 @@ for (i in 1:length(param.set.c)){ #loop over gamma
     tuning.criterion.values.clusterSVM[row.idx.now, 3] <- gme
   }} #end for two for loops
 
-idx.sorting <- order(-tuning.criterion.values.clusterSVM$criterion, tuning.criterion.values.clusterSVM$c, tuning.criterion.values.clusterSVM$lambda)
+idx.sorting <- order(-tuning.criterion.values.clusterSVM$criterion, # the larger the g-mean, the better.
+                     tuning.criterion.values.clusterSVM$c,
+                     tuning.criterion.values.clusterSVM$lambda)
 tuning.criterion.values.clusterSVM <- tuning.criterion.values.clusterSVM[idx.sorting, ]
 param.clusterSVM.c <- tuning.criterion.values.clusterSVM[1,1]
 param.clusterSVM.lambda <- tuning.criterion.values.clusterSVM[1,2]
@@ -510,7 +520,9 @@ if (use.method$"smotesvm"){ #use this method or NOT, for flexible comparison
     }} #end for two for loops
   
   #### 2.5. get the best parameters
-  idx.sorting <- order(-tuning.criterion.values.smotesvm$criterion, tuning.criterion.values.smotesvm$c, tuning.criterion.values.smotesvm$gamma)
+  idx.sorting <- order(-tuning.criterion.values.smotesvm$criterion, # the larger the g-mean, the better.
+                       tuning.criterion.values.smotesvm$c,
+                       tuning.criterion.values.smotesvm$gamma)
   tuning.criterion.values.smotesvm <- tuning.criterion.values.smotesvm[idx.sorting, ]
   param.best.smotesvm <- tuning.criterion.values.smotesvm[1,]
   
@@ -608,7 +620,9 @@ if (use.method$"blsmotesvm"){ #use this method or NOT, for flexible comparison
     }} #end for two for loops
   
   #### 2.5. get the best parameters
-  idx.sorting <- order(-tuning.criterion.values.blsmotesvm$criterion, tuning.criterion.values.blsmotesvm$c, tuning.criterion.values.blsmotesvm$gamma)
+  idx.sorting <- order(-tuning.criterion.values.blsmotesvm$criterion, # the larger the g-mean, the better.
+                       tuning.criterion.values.blsmotesvm$c,
+                       tuning.criterion.values.blsmotesvm$gamma)
   tuning.criterion.values.blsmotesvm <- tuning.criterion.values.blsmotesvm[idx.sorting, ]
   param.best.blsmotesvm <- tuning.criterion.values.blsmotesvm[1,]
   
@@ -713,7 +727,9 @@ if (use.method$"dbsmotesvm"){ #use this method or NOT, for flexible comparison
     }} #end for two for loops
   
   #### 2.5. get the best parameters
-  idx.sorting <- order(-tuning.criterion.values.dbsmotesvm$criterion, tuning.criterion.values.dbsmotesvm$c, tuning.criterion.values.dbsmotesvm$gamma)
+  idx.sorting <- order(-tuning.criterion.values.dbsmotesvm$criterion, # the larger the g-mean, the better.
+                       tuning.criterion.values.dbsmotesvm$c,
+                       tuning.criterion.values.dbsmotesvm$gamma)
   tuning.criterion.values.dbsmotesvm <- tuning.criterion.values.dbsmotesvm[idx.sorting, ]
   param.best.dbsmotesvm <- tuning.criterion.values.dbsmotesvm[1,]
   

@@ -52,7 +52,7 @@ national.pos.predictors <- national.pos[predictors]
 #select positive vectors from the national dataset
 
 # centering and scaling of the data. all positive observations from national dataset and army dataset has PREC=0, so we omit PREC when scaling.
-preProcValues <-preProcess(rbind(national.pos.predictors, army.predictors)[c("TEMP", "WIND_SPEED", "RH")], method =c("center", "scale"))
+preProcValues <-preProcess(rbind(national.pos.predictors, army.predictors)[c("TEMP", "WIND_SPEED", "RH")], method = "range")
 national.pos.predictors.for.distance <- national.pos.predictors
 national.pos.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")] <- predict(preProcValues, national.pos.predictors.for.distance[c("TEMP", "WIND_SPEED", "RH")])
 
@@ -102,7 +102,7 @@ head(national)
 
 # calculate l2 distance
 # centering and scaling of the data. all positive observations from national dataset and army dataset has PREC=0, so we omit PREC when scaling.
-preProcValues <-preProcess(rbind(national.neg.predictors, army.predictors), method =c("center", "scale"))
+preProcValues <-preProcess(rbind(national.neg.predictors, army.predictors), method = "range")
 national.neg.predictors.for.distance <- predict(preProcValues, national.neg.predictors)
 
 army.predictors.for.distance.neg <- predict(preProcValues, army.predictors)
@@ -192,7 +192,7 @@ imbal.pre.sd <- imbal.gme
   
   
   #plot for the paper
-  preProcValues <-preProcess(data.full[-5], method =c("center", "scale"))
+  preProcValues <-preProcess(data.full[-5], method = "range")
   data.full.plot<- predict(preProcValues, data.full)
   plot(data.full.plot[,1:4], col = data.full.plot[,5])
   
@@ -300,7 +300,7 @@ imbal.pre.sd <- imbal.gme
           data.gswsvm3.tune  <- data.gswsvm3[  1 * indicator * idx.split.gswsvm3, ] 
           
           ### 2.3. centering and scaling
-          preProcValues <-preProcess(data.gswsvm3.train[-5], method =c("center", "scale"))
+          preProcValues <-preProcess(data.gswsvm3.train[-5], method = "range")
           data.gswsvm3.train <- predict(preProcValues, data.gswsvm3.train)
           data.gswsvm3.tune <- predict(preProcValues, data.gswsvm3.tune)
           
@@ -343,7 +343,7 @@ imbal.pre.sd <- imbal.gme
       param.best.gswsvm3 <- tuning.criterion.values.gswsvm3[1,]
       
       ### 3.2. centering and scaling
-      preProcValues <-preProcess(data.gswsvm3[-5], method =c("center", "scale"))
+      preProcValues <-preProcess(data.gswsvm3[-5], method = "range")
       data.gswsvm3 <- predict(preProcValues, data.gswsvm3)
       data.gswsvm3.test <- predict(preProcValues, data.test)
       
@@ -404,7 +404,7 @@ imbal.pre.sd <- imbal.gme
           data.svm.train <- data.svm[ -1 * indicator * idx.split.svm, ] # 1 - 1/4
           data.svm.tune  <- data.svm[  1 * indicator * idx.split.svm, ] # 1/4
       
-          preProcValues <-preProcess(data.svm.train[-5], method =c("center", "scale"))
+          preProcValues <-preProcess(data.svm.train[-5], method = "range")
           data.svm.train <- predict(preProcValues, data.svm.train)
           data.svm.tune  <- predict(preProcValues, data.svm.tune)
       # 2.2. hyperparameter tuning w.r.t. g-mean
@@ -436,7 +436,7 @@ imbal.pre.sd <- imbal.gme
       param.svm.gamma <- tuning.criterion.values.svm[1,2]
       
       # centering and scaling
-      preProcValues <-preProcess(data.svm[-5], method =c("center", "scale"))
+      preProcValues <-preProcess(data.svm[-5], method = "range")
       data.svm <- predict(preProcValues, data.svm)
       data.svm.test <- predict(preProcValues, data.test)
       
@@ -485,7 +485,7 @@ imbal.pre.sd <- imbal.gme
           data.svmdc.train <- data.svmdc[ -1 * indicator * idx.split.og, ] # 1 - tuning ratio
           data.svmdc.tune  <- data.svmdc[  1 * indicator * idx.split.og, ] # tuning ratio
       
-          preProcValues <-preProcess(data.svmdc.train[-5], method =c("center", "scale"))
+          preProcValues <-preProcess(data.svmdc.train[-5], method = "range")
           data.svmdc.train <- predict(preProcValues, data.svmdc.train)
           data.svmdc.tune  <- predict(preProcValues, data.svmdc.tune)
       
@@ -522,7 +522,7 @@ imbal.pre.sd <- imbal.gme
       param.best.svmdc <- tuning.criterion.values.svmdc[1,]
       
       # centering and scaling
-      preProcValues <-preProcess(data.svmdc[-5], method =c("center", "scale"))
+      preProcValues <-preProcess(data.svmdc[-5], method = "range")
       data.svmdc <- predict(preProcValues, data.svmdc)
       data.svmdc.test <- predict(preProcValues, data.test)
       
@@ -572,7 +572,7 @@ imbal.pre.sd <- imbal.gme
           data.clustersvm.tune  <- data.clustersvm[ 1 * indicator * idx.split.og, ] # tuning ratio
           
           # scaling and centering of the data
-          preProcValues <-preProcess(data.clustersvm.train[,-5], method =c("center", "scale"))
+          preProcValues <-preProcess(data.clustersvm.train[,-5], method = "range")
           data.clustersvm.train <- predict(preProcValues, data.clustersvm.train)
           data.clustersvm.tune <- predict(preProcValues, data.clustersvm.tune) #scale w.r.t mean and sd of training dataset
           
@@ -611,7 +611,7 @@ imbal.pre.sd <- imbal.gme
       param.clusterSVM.lambda <- tuning.criterion.values.clusterSVM[1,2]
       
       # centering and scaling
-      preProcValues <-preProcess(data.clustersvm[,-5], method =c("center", "scale"))
+      preProcValues <-preProcess(data.clustersvm[,-5], method = "range")
       data.clustersvm <- predict(preProcValues, data.clustersvm)
       data.test.clustersvm <- predict(preProcValues, data.test)
       
@@ -666,7 +666,7 @@ imbal.pre.sd <- imbal.gme
       data.smotesvm.og.tune  <- data.smotesvm[ 1 * indicator * idx.split.og, ] # tuning ratio
       
       # scaling and centering
-      preProcValues <-preProcess(data.smotesvm.og.train[-5], method =c("center", "scale"))
+      preProcValues <-preProcess(data.smotesvm.og.train[-5], method = "range")
       data.smotesvm.og.train <- predict(preProcValues, data.smotesvm.og.train)
       data.smotesvm.og.tune  <- predict(preProcValues, data.smotesvm.og.tune)
       
@@ -735,7 +735,7 @@ imbal.pre.sd <- imbal.gme
       param.best.smotesvm <- tuning.criterion.values.smotesvm[1,]
       
       # centering and scaling
-      preProcValues <-preProcess(data.smotesvm[,-5], method =c("center", "scale"))
+      preProcValues <-preProcess(data.smotesvm[,-5], method = "range")
       data.smotesvm <- predict(preProcValues, data.smotesvm)
       data.test.smotesvm <- predict(preProcValues, data.test)
       
@@ -817,7 +817,7 @@ imbal.pre.sd <- imbal.gme
           data.blsmotesvm.og.train <- data.blsmotesvm[-1 * indicator * idx.split.og, ] # 1 - tuning ratio
           data.blsmotesvm.og.tune  <- data.blsmotesvm[ 1 * indicator * idx.split.og, ] # tuning ratio
           
-          preProcValues <-preProcess(data.blsmotesvm.og.train[-5], method =c("center", "scale"))
+          preProcValues <-preProcess(data.blsmotesvm.og.train[-5], method = "range")
           data.blsmotesvm.og.train <- predict(preProcValues, data.blsmotesvm.og.train)
           data.blsmotesvm.og.tune  <- predict(preProcValues, data.blsmotesvm.og.tune)
           
@@ -887,7 +887,7 @@ imbal.pre.sd <- imbal.gme
       param.best.blsmotesvm <- tuning.criterion.values.blsmotesvm[1,]
       
       # centering and scaling
-      preProcValues <-preProcess(data.blsmotesvm[,-5], method =c("center", "scale"))
+      preProcValues <-preProcess(data.blsmotesvm[,-5], method = "range")
       data.blsmotesvm <- predict(preProcValues, data.blsmotesvm)
       data.test.blsmotesvm <- predict(preProcValues, data.test)
       
@@ -970,7 +970,7 @@ imbal.pre.sd <- imbal.gme
           data.dbsmotesvm.og.train <- data.dbsmotesvm[-1 * indicator * idx.split.og, ] # 1 - tuning ratio
           data.dbsmotesvm.og.tune  <- data.dbsmotesvm[ 1 * indicator * idx.split.og, ] # tuning ratio
           
-          preProcValues <-preProcess(data.dbsmotesvm.og.train[-5], method =c("center", "scale"))
+          preProcValues <-preProcess(data.dbsmotesvm.og.train[-5], method = "range")
           data.dbsmotesvm.og.train <- predict(preProcValues, data.dbsmotesvm.og.train)
           data.dbsmotesvm.og.tune  <- predict(preProcValues, data.dbsmotesvm.og.tune)
           
@@ -1039,7 +1039,7 @@ imbal.pre.sd <- imbal.gme
       param.best.dbsmotesvm <- tuning.criterion.values.dbsmotesvm[1,]
       
       # centering and scaling
-      preProcValues <-preProcess(data.dbsmotesvm[,-5], method =c("center", "scale"))
+      preProcValues <-preProcess(data.dbsmotesvm[,-5], method = "range")
       data.dbsmotesvm <- predict(preProcValues, data.dbsmotesvm)
       data.test.dbsmotesvm <- predict(preProcValues, data.test)
       

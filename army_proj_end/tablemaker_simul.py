@@ -1,7 +1,7 @@
 
 
 
-f"""
+text = f"""
 \begin{table}
 \footnotesize
 
