@@ -1,0 +1,16 @@
+best.tune_wsvm	tune_wsvm
+coef.wsvm	wsvm
+plot.tune_wsvm	plot.tune_wsvm
+plot.wsvm	plot.wsvm
+predict.wsvm	predict.wsvm
+print.summary.tune_wsvm	tune_wsvm
+print.summary.wsvm	wsvm
+print.tune_wsvm	tune_wsvm
+print.wsvm	wsvm
+summary.tune_wsvm	tune_wsvm
+summary.wsvm	wsvm
+tune.control	tune.control
+tune_wsvm	tune_wsvm
+wsvm	wsvm
+wsvm.default	wsvm
+wsvm.formula	wsvm

@@ -1,0 +1,8 @@
+plot.tune_wsvm          Plot Tuning Object
+plot.wsvm               Plot WSVM Objects
+predict.wsvm            Predict Method for Subject Weighted Support
+                        Vector Machines
+tune.control            Control Parameters for the tune/tune_wsvm
+                        Function
+tune_wsvm               Parameter Tuning of Functions Using Grid Search
+wsvm                    Subject Weighted Support Vector Machines
