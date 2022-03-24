@@ -1,14 +1,6 @@
-library(caret) # for data splitting
+library("caret", lib.loc = lib.loc.gswsvm) # 5-fold cv
 
 
-library(mclust) # for Gaussian mixture model
-library(mvtnorm)
-library(e1071) # for svm
-library(SwarmSVM) # for clusterSVM
-library(smotefamily)
-library(plotly) #plotly 패키지 로드
-library(ggplot2)
-library(rstudioapi)  
 
 setwd(dirname(getActiveDocumentContext()$path)) #setwd to the directory of this code file
 direc = getwd()
@@ -19,7 +11,7 @@ direc = getwd()
 n.positive <- 40
 n.samples <- 984
 n.cluster.army <- 4
-jump.step = 4
+jump.step = 2
 # automatically determined values
 n.national.positive <- n.positive - 8 #number of national positives to mark as army data
 n.national.positive.per.cluster = n.national.positive/n.cluster.army
